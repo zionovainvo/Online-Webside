@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Receipt — Zionova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="navbar no-print">
+  <div class="nav-inner">
+    <a href="index.html" class="brand-logo">ZIO<span>NOVA</span></a>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="index.html#shop">Shop</a>
+    </nav>
+    <div class="nav-actions"></div>
+  </div>
+</header>
+
+<div class="receipt-wrap">
+  <div class="receipt" id="receiptContent">
+    <!-- injected by JS -->
+    <p style="text-align:center;color:var(--grey);">Loading receipt...</p>
+  </div>
+  <div class="receipt-actions no-print">
+    <button class="btn btn-gold" onclick="window.print()">🖨 Print Bill</button>
+    <a href="index.html" class="btn btn-outline">Continue Shopping</a>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+function escapeHTML(str=''){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+const params = new URLSearchParams(window.location.search);
+const orderId = params.get('order');
+const order = orderId ? OrderStore.getById(orderId) : null;
+const brand = BrandStore.get();
+const target = document.getElementById('receiptContent');
+
+if(!order){
+  target.innerHTML = `<p style="text-align:center;color:var(--grey);">Order not found. <a href="index.html" class="gold-text">Return home</a>.</p>`;
+}else{
+  const dateObj = new Date(order.date);
+  target.innerHTML = `
+    <div class="receipt-head">
+      <h2>ZIO<span class="gold-text">NOVA</span></h2>
+      <span>Official Order Receipt</span>
+    </div>
+    <div class="receipt-meta">
+      <div>
+        <div><strong>Order ID:</strong> ${escapeHTML(order.id)}</div>
+        <div><strong>Date:</strong> ${dateObj.toLocaleDateString()} ${dateObj.toLocaleTimeString()}</div>
+        <div><strong>Payment:</strong> ${escapeHTML(order.paymentMethod)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div><strong>Billed To:</strong></div>
+        <div>${escapeHTML(order.customer.name || 'Walk-in Customer')}</div>
+        <div>${escapeHTML(order.customer.phone || '')}</div>
+        <div>${escapeHTML(order.customer.address || '')}</div>
+      </div>
+    </div>
+    <table class="receipt-table">
+      <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th style="text-align:right;">Total</th></tr></thead>
+      <tbody>
+        ${order.items.map(i => `
+          <tr>
+            <td>${escapeHTML(i.name)}</td>
+            <td>${i.qty}</td>
+            <td>${formatMoney(i.unitPrice)}</td>
+            <td style="text-align:right;">${formatMoney(i.lineTotal)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <div class="receipt-totals">
+      <div class="summary-row"><span>Subtotal</span><span>${formatMoney(order.subtotal)}</span></div>
+      <div class="summary-row"><span>Delivery</span><span>${formatMoney(order.shipping)}</span></div>
+      <div class="summary-row total"><span>Total</span><span>${formatMoney(order.total)}</span></div>
+    </div>
+    <p class="receipt-thanks">Thank you for shopping with Zionova — Wear the Statement.</p>
+  `;
+}
+</script>
+</body>
+</html>

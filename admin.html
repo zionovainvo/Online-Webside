@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zionova — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body class="admin-body">
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div class="login-wrap" id="loginScreen">
+  <div class="login-card">
+    <h1>ZIO<span class="gold-text">NOVA</span></h1>
+    <p>Staff Access Only</p>
+    <form id="loginForm">
+      <div class="form-group" style="text-align:left;">
+        <label>Username</label>
+        <input type="text" id="loginUser" required autocomplete="username">
+      </div>
+      <div class="form-group" style="text-align:left;">
+        <label>Password</label>
+        <input type="password" id="loginPass" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-gold btn-block">Login</button>
+      <p class="login-error" id="loginError"></p>
+    </form>
+    <p class="login-hint">Default: admin / zionova2026 — change this in Settings after login.</p>
+    <p class="login-hint"><a href="index.html">&larr; Back to store</a></p>
+  </div>
+</div>
+
+<!-- ================= ADMIN DASHBOARD ================= -->
+<div class="admin-shell" id="adminShell" style="display:none;">
+  <aside class="admin-sidebar">
+    <div class="admin-logo">ZIO<span>NOVA</span></div>
+    <nav class="admin-nav">
+      <button class="nav-btn active" data-tab="dashboard">📊 <span class="label">Dashboard</span></button>
+      <button class="nav-btn" data-tab="pos">🛒 <span class="label">Point of Sale</span></button>
+      <button class="nav-btn" data-tab="products">👕 <span class="label">Products</span></button>
+      <button class="nav-btn" data-tab="orders">📦 <span class="label">Orders</span></button>
+      <button class="nav-btn" data-tab="reports">📈 <span class="label">Sales Reports</span></button>
+      <button class="nav-btn" data-tab="settings">⚙️ <span class="label">Settings</span></button>
+    </nav>
+    <button class="admin-logout" id="logoutBtn">⏻ Logout</button>
+  </aside>
+
+  <main class="admin-main">
+
+    <!-- ---------- DASHBOARD ---------- -->
+    <section class="tab-panel active" id="tab-dashboard">
+      <div class="admin-topbar">
+        <h1>Dashboard</h1>
+        <span class="date" id="todayDate"></span>
+      </div>
+      <div class="stat-cards">
+        <div class="stat-card"><div class="label">Today's Sales</div><div class="value" id="statToday">Rs. 0</div></div>
+        <div class="stat-card"><div class="label">This Month</div><div class="value" id="statMonth">Rs. 0</div></div>
+        <div class="stat-card"><div class="label">Total Orders</div><div class="value" id="statOrders">0</div></div>
+        <div class="stat-card"><div class="label">Products Listed</div><div class="value" id="statProducts">0</div></div>
+      </div>
+      <div class="card">
+        <h3>Last 7 Days</h3>
+        <div class="report-bars" id="weekBars"></div>
+      </div>
+      <div class="card">
+        <h3>Recent Orders</h3>
+        <table class="data-table" id="recentOrdersTable">
+          <thead><tr><th>Order ID</th><th>Customer</th><th>Source</th><th>Total</th><th>Date</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- POINT OF SALE ---------- -->
+    <section class="tab-panel" id="tab-pos">
+      <div class="admin-topbar"><h1>Point of Sale</h1></div>
+      <div class="pos-grid">
+        <div>
+          <input type="text" id="posSearch" placeholder="Search products..." style="width:100%;padding:12px;border:1px solid var(--light-grey);margin-bottom:16px;">
+          <div class="pos-products" id="posProducts"></div>
+        </div>
+        <div class="pos-cart">
+          <h3 style="font-family:var(--serif);font-size:18px;margin-bottom:16px;">Current Sale</h3>
+          <div id="posCartItems"></div>
+          <div class="summary-row total"><span>Total</span><span id="posTotal">Rs. 0.00</span></div>
+          <div class="form-group" style="margin-top:16px;">
+            <label>Customer Name (optional)</label>
+            <input type="text" id="posCustomerName" placeholder="Walk-in Customer">
+          </div>
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select id="posPaymentMethod">
+              <option>Cash</option>
+              <option>Card</option>
+              <option>Bank Transfer</option>
+            </select>
+          </div>
+          <button class="btn btn-gold btn-block" id="posCheckoutBtn">Complete Sale</button>
+          <button class="btn btn-outline btn-block" id="posClearBtn" style="margin-top:10px;">Clear Sale</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- PRODUCTS ---------- -->
+    <section class="tab-panel" id="tab-products">
+      <div class="admin-topbar">
+        <h1>Manage Products</h1>
+        <button class="btn btn-gold btn-sm" id="addProductBtn">+ Add Product</button>
+      </div>
+      <div class="card">
+        <table class="data-table">
+          <thead><tr><th></th><th>Name</th><th>Price</th><th>Discount</th><th>Final Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="productsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- ORDERS ---------- -->
+    <section class="tab-panel" id="tab-orders">
+      <div class="admin-topbar"><h1>All Orders</h1></div>
+      <div class="filter-row">
+        <select id="orderSourceFilter">
+          <option value="all">All Sources</option>
+          <option value="online">Online</option>
+          <option value="pos">In-Store (POS)</option>
+        </select>
+        <input type="date" id="orderDateFilter">
+        <button class="btn btn-outline btn-sm" id="clearOrderFilter">Clear Filter</button>
+      </div>
+      <div class="card">
+        <table class="data-table">
+          <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Source</th><th>Date</th><th></th></tr></thead>
+          <tbody id="ordersTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- REPORTS ---------- -->
+    <section class="tab-panel" id="tab-reports">
+      <div class="admin-topbar"><h1>Sales Reports</h1></div>
+      <div class="stat-cards" style="grid-template-columns:1fr 1fr;">
+        <div class="stat-card"><div class="label">Today's Total Sales</div><div class="value" id="repToday">Rs. 0</div></div>
+        <div class="stat-card"><div class="label">This Month's Total Sales</div><div class="value" id="repMonth">Rs. 0</div></div>
+      </div>
+      <div class="card">
+        <h3>Daily Sales — Last 7 Days</h3>
+        <div class="report-bars" id="dailyReportBars"></div>
+      </div>
+      <div class="card">
+        <h3>Monthly Sales — Last 6 Months</h3>
+        <div class="report-bars" id="monthlyReportBars"></div>
+      </div>
+      <div class="card">
+        <h3>Best Selling Products</h3>
+        <table class="data-table">
+          <thead><tr><th>Product</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+          <tbody id="bestSellersTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ---------- SETTINGS ---------- -->
+    <section class="tab-panel" id="tab-settings">
+      <div class="admin-topbar"><h1>Settings</h1></div>
+
+      <div class="card">
+        <h3>Brand Content</h3>
+        <form id="brandForm">
+          <div class="form-group"><label>Brand Description</label><textarea id="setDesc" rows="3"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Instagram URL</label><input type="text" id="setInstagram"></div>
+            <div class="form-group"><label>Facebook URL</label><input type="text" id="setFacebook"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>TikTok URL</label><input type="text" id="setTiktok"></div>
+            <div class="form-group"><label>WhatsApp Link</label><input type="text" id="setWhatsapp"></div>
+          </div>
+          <div class="form-group"><label>Contact Email</label><input type="text" id="setEmail"></div>
+          <button type="submit" class="btn btn-dark">Save Brand Settings</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Change Admin Login</h3>
+        <form id="credsForm">
+          <div class="form-row">
+            <div class="form-group"><label>New Username</label><input type="text" id="setUsername" required></div>
+            <div class="form-group"><label>New Password</label><input type="text" id="setPassword" required></div>
+          </div>
+          <button type="submit" class="btn btn-dark">Update Credentials</button>
+          <p style="font-size:11px;color:var(--grey);margin-top:10px;">Note: this is a client-side demo login stored in your browser only — not secure for a real production backend.</p>
+        </form>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ---------- PRODUCT MODAL ---------- -->
+<div class="modal-overlay" id="productModalOverlay">
+  <div class="modal">
+    <h3 id="productModalTitle">Add Product</h3>
+    <form id="productForm">
+      <input type="hidden" id="prodId">
+      <div class="form-group"><label>Product Name *</label><input type="text" id="prodName" required></div>
+      <div class="form-row">
+        <div class="form-group"><label>Price (Rs.) *</label><input type="number" id="prodPrice" min="0" step="0.01" required></div>
+        <div class="form-group"><label>Discount (%)</label><input type="number" id="prodDiscount" min="0" max="100" value="0"></div>
+      </div>
+      <div class="form-group"><label>Stock Quantity *</label><input type="number" id="prodStock" min="0" required></div>
+      <div class="form-group"><label>Description</label><textarea id="prodDesc" rows="3"></textarea></div>
+      <div class="form-group"><label>Image URL (optional)</label><input type="text" id="prodImage" placeholder="https://..."></div>
+      <div class="modal-actions">
+        <button type="submit" class="btn btn-gold btn-block">Save Product</button>
+        <button type="button" class="btn btn-outline btn-block" id="cancelProductBtn">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
