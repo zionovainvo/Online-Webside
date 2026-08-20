@@ -1,8 +1,8 @@
-const SPREADSHEET_ID = 'PASTE_YOUR_GOOGLE_SHEET_ID_HERE';
-const SHEET_NAME = 'Orders';
+const SPREADSHEET_ID = 'https://docs.google.com/spreadsheets/d/1FEucqAieo_ljgo5ArjA4uAPaa6-iIO0_ztzLOiSmmsI/edit?usp=drive_link';
+const SHEET_NAME = 'Zionova Sales Report';
 
 function doGet(e) {
-  if (e.parameter.action !== 'orders') return jsonResponse({ ok: true });
+  if (e.parameter.action !== 'Zionova Sales Report') return jsonResponse({ ok: true });
   const sheet = getSheet();
   const values = sheet.getDataRange().getValues();
   if (values.length < 2) return jsonResponse([]);
