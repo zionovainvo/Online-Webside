@@ -9,8 +9,11 @@ const STORE_KEYS = {
   orders: 'zionova_orders',
   admin: 'zionova_admin_credentials',
   session: 'zionova_admin_session', // sessionStorage
-  brand: 'zionova_brand_settings'
+  brand: 'zionova_brand_settings',
+  sheetsUrl: 'zionova_google_sheets_url'
 };
+
+const DEFAULT_SHEETS_URL = '';
 
 /* ---------------- Default seed data (first run only) ---------------- */
 const DEFAULT_PRODUCTS = [
@@ -82,6 +85,46 @@ function loadJSON(key, fallback){
 function saveJSON(key, value){
   localStorage.setItem(key, JSON.stringify(value));
 }
+
+const SheetsStore = {
+  getUrl(){ return localStorage.getItem(STORE_KEYS.sheetsUrl) || DEFAULT_SHEETS_URL; },
+  setUrl(url){ localStorage.setItem(STORE_KEYS.sheetsUrl, url.trim()); },
+  async syncOrder(order){
+    const url = this.getUrl();
+    if(!url) return false;
+    try{
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(order)
+      });
+      return true;
+    }catch(error){
+      console.error('Google Sheets order sync failed', error);
+      return false;
+    }
+  },
+  async pullOrders(){
+    const url = this.getUrl();
+    if(!url) return false;
+    try{
+      const response = await fetch(`${url}${url.includes('?') ? '&' : '?'}action=orders`);
+      if(!response.ok) throw new Error(`HTTP ${response.status}`);
+      const remoteOrders = await response.json();
+      if(!Array.isArray(remoteOrders)) throw new Error('Invalid orders response');
+      const localOrders = OrderStore.getAll();
+      const remoteIds = new Set(remoteOrders.map(order => order.id));
+      await Promise.all(localOrders.filter(order => !remoteIds.has(order.id)).map(order => this.syncOrder(order)));
+      const merged = new Map(localOrders.map(order => [order.id, order]));
+      remoteOrders.forEach(order => merged.set(order.id, order));
+      OrderStore.save([...merged.values()].sort((a, b) => new Date(b.date) - new Date(a.date)));
+      return true;
+    }catch(error){
+      console.error('Google Sheets order download failed', error);
+      return false;
+    }
+  }
+};
 
 /* ---------------- Init (run once) ---------------- */
 function initStore(){
@@ -210,7 +253,7 @@ const OrderStore = {
     });
     ProductStore.save(products);
 
-    return fullOrder;
+      return fullOrder;
   },
   getById(id){ return this.getAll().find(o => o.id === id); },
   remove(id){

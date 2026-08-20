@@ -17,10 +17,10 @@ function showToast(msg){
 /* =====================================================
    AUTH GATE
    ===================================================== */
-function showApp(){
+async function showApp(){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminShell').style.display = 'flex';
-  initDashboard();
+  await initDashboard();
 }
 function showLogin(){
   document.getElementById('loginScreen').style.display = 'flex';
@@ -69,7 +69,8 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
   });
 });
 
-function initDashboard(){
+async function initDashboard(){
+  await SheetsStore.pullOrders();
   renderDashboard();
   renderPOS();
   renderProductsTable();
@@ -277,7 +278,7 @@ document.getElementById('posClearBtn').addEventListener('click', () => {
   renderPOSCart();
 });
 
-document.getElementById('posCheckoutBtn').addEventListener('click', () => {
+document.getElementById('posCheckoutBtn').addEventListener('click', async () => {
   const items = posDetailedItems();
   if(!items.length){
     showToast('Add at least one item first');
@@ -297,6 +298,8 @@ document.getElementById('posCheckoutBtn').addEventListener('click', () => {
     paymentMethod,
     status: 'Paid'
   });
+
+  await SheetsStore.syncOrder(order);
 
   posCart = [];
   document.getElementById('posCustomerName').value = '';
@@ -385,6 +388,7 @@ function loadSettingsForm(){
   document.getElementById('setTiktok').value = brand.tiktok || '';
   document.getElementById('setWhatsapp').value = brand.whatsapp || '';
   document.getElementById('setEmail').value = brand.email || '';
+  document.getElementById('setSheetsUrl').value = SheetsStore.getUrl();
 
   const creds = AdminAuth.getCredentials();
   document.getElementById('setUsername').value = creds.username;
@@ -402,6 +406,7 @@ document.getElementById('brandForm').addEventListener('submit', function(e){
     whatsapp: document.getElementById('setWhatsapp').value.trim(),
     email: document.getElementById('setEmail').value.trim()
   });
+  SheetsStore.setUrl(document.getElementById('setSheetsUrl').value);
   showToast('Brand settings saved');
 });
 
