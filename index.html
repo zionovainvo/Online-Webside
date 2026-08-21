@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zionova — Premium Streetwear</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -22,7 +22,7 @@
     </nav>
     <div class="nav-actions">
       <button class="icon-btn" id="cartToggle" title="Cart" aria-label="Open cart">
-        🛍
+        <span id="bagIcon"></span>
         <span class="cart-badge" id="cartCount">0</span>
       </button>
     </div>
@@ -33,16 +33,16 @@
 <section class="hero" id="home">
   <div class="hero-inner">
     <div>
-      <span class="hero-eyebrow">Premium Streetwear Label</span>
-      <h1 id="heroTitle">Wear the <em>Future</em>.</h1>
-      <p id="heroDesc">Zionova is a premium streetwear label built for those who lead, not follow. Every piece is designed in small batches, blending minimalist tailoring with bold gold accents.</p>
+      <span class="hero-eyebrow" id="heroEyebrow">Premium Streetwear Label</span>
+      <h1 id="heroTitle">Wear the <em>Statement</em>.</h1>
+      <p id="heroDesc">Zionova is a premium streetwear label built for those who lead, not follow.</p>
       <div class="hero-cta">
         <a href="#shop" class="btn btn-gold">Shop Collection</a>
         <a href="#about" class="btn btn-outline">Our Story</a>
       </div>
     </div>
-    <div class="hero-visual">
-      <div class="hero-visual-caption">The Gold Standard Collection — 2026</div>
+    <div class="hero-visual" id="heroVisual">
+      <div class="hero-visual-caption" id="heroCaption">The Gold Standard Collection — 2026</div>
     </div>
   </div>
 </section>
@@ -50,16 +50,16 @@
 <!-- ================= ABOUT ================= -->
 <section class="about" id="about">
   <div class="container about-grid">
-    <div class="about-visual">Est. 2026</div>
+    <div class="about-visual" id="aboutVisual"><span id="aboutBadgeText">Est. 2026</span></div>
     <div class="about-text">
       <span class="section-label">The Brand</span>
-      <h2>About Zionova</h2>
-      <p id="aboutDesc">Zionova is a premium streetwear label built for those who lead, not follow. Every piece is designed in small batches, blending minimalist tailoring with bold gold accents — crafted for people who value quality over quantity.</p>
-      <p>From the cut of the collar to the weight of the cotton, every detail is considered. This is fashion made to be felt, not just worn.</p>
+      <h2 id="aboutHeading">About Zionova</h2>
+      <p id="aboutDesc">Zionova is a premium streetwear label.</p>
+      <p id="aboutDesc2">Fashion made to be felt, not just worn.</p>
       <div class="stat-row">
-        <div class="stat"><b>4.5★</b><span>Customer Rating</span></div>
-        <div class="stat"><b>1.5K+</b><span>Happy Customers</span></div>
-        <div class="stat"><b>100%</b><span>Premium Cotton</span></div>
+        <div class="stat"><b id="stat1Value">4.9★</b><span id="stat1Label">Customer Rating</span></div>
+        <div class="stat"><b id="stat2Value">2K+</b><span id="stat2Label">Happy Customers</span></div>
+        <div class="stat"><b id="stat3Value">100%</b><span id="stat3Label">Premium Cotton</span></div>
       </div>
     </div>
   </div>
@@ -71,9 +71,7 @@
     <span class="section-label">Latest Drop</span>
     <h2 class="section-title">Shop T-Shirts</h2>
     <p class="section-sub">Premium cotton tees, designed and finished with signature Zionova gold detailing.</p>
-    <div class="product-grid" id="productGrid">
-      <!-- injected by JS -->
-    </div>
+    <div class="product-grid" id="productGrid"></div>
   </div>
 </section>
 
@@ -82,20 +80,7 @@
   <span class="section-label">Stay Connected</span>
   <h2 class="section-title">Follow Zionova</h2>
   <p class="section-sub">Join the community — new drops, behind the scenes, and exclusive offers.</p>
-  <div class="social-grid" id="socialGrid">
-    <a class="social-card" href="https://www.instagram.com/zionova_officials?">
-      <img src="instagram.png" alt="Zionova streetwear style">
-      <span>Instagram</span>
-    </a>
-    <a class="social-card" href="https://www.tiktok.com/@zionova_officials?">
-      <img src="tiktok.png" alt="Zionova fashion collection">
-      <span>TikTok</span>
-    </a>
-    <a class="social-card" href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Follow Zionova on Facebook">
-      <img src="facebook.png" alt="Zionova premium apparel">
-      <span>Facebook</span>
-    </a>
-  </div>
+  <div class="social-grid" id="socialGrid"></div>
 </section>
 
 <!-- ================= FOOTER ================= -->
@@ -103,7 +88,7 @@
   <div class="container footer-grid">
     <div>
       <h4>ZIO<span class="gold-text">NOVA</span></h4>
-      <p>Premium streetwear crafted for those who lead. Minimal design, maximum statement.</p>
+      <p id="footerAbout">Premium streetwear crafted for those who lead.</p>
     </div>
     <div>
       <h4>Shop</h4>
@@ -115,13 +100,11 @@
     </div>
     <div>
       <h4>Contact</h4>
-      <ul id="footerContact">
-        <!-- injected by JS -->
-      </ul>
+      <ul id="footerContact"></ul>
     </div>
   </div>
   <div class="container footer-bottom">
-    <span>&copy; <span id="year"></span> Zionova. All rights reserved.</span>
+    <span>&copy; <span id="year"></span> Zionova. <span id="footerNote">All rights reserved.</span></span>
     <a href="admin.html" style="opacity:.5;">Staff Login</a>
   </div>
 </footer>
@@ -131,11 +114,9 @@
 <aside class="cart-drawer" id="cartDrawer">
   <div class="cart-header">
     <h3>Your Bag</h3>
-    <button class="close-btn" id="closeCart">&times;</button>
+    <button class="close-btn" id="closeCart"><span id="closeIcon"></span></button>
   </div>
-  <div class="cart-items" id="cartItems">
-    <!-- injected by JS -->
-  </div>
+  <div class="cart-items" id="cartItems"></div>
   <div class="cart-footer">
     <div class="cart-total-row">
       <span>Subtotal</span>
@@ -148,6 +129,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="data.js"></script>
+<script src="icons.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

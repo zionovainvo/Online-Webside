@@ -5,15 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zionova — Admin Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <meta name="robots" content="noindex, nofollow">
+<!-- SheetJS: used only for the "Export to Excel" button in Sales Reports -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="admin-body">
 
 <!-- ================= LOGIN SCREEN ================= -->
 <div class="login-wrap" id="loginScreen">
   <div class="login-card">
+    <div id="loginLockIcon"></div>
     <h1>ZIO<span class="gold-text">NOVA</span></h1>
     <p>Staff Access Only</p>
     <form id="loginForm">
@@ -29,7 +32,7 @@
       <p class="login-error" id="loginError"></p>
     </form>
     <p class="login-hint">Default: admin / zionova2026 — change this in Settings after login.</p>
-    <p class="login-hint"><a href="index.html">&larr; Back to store</a></p>
+    <p class="login-hint" id="backToStoreLink"></p>
   </div>
 </div>
 
@@ -38,14 +41,15 @@
   <aside class="admin-sidebar">
     <div class="admin-logo">ZIO<span>NOVA</span></div>
     <nav class="admin-nav">
-      <button class="nav-btn active" data-tab="dashboard">📊 <span class="label">Dashboard</span></button>
-      <button class="nav-btn" data-tab="pos">🛒 <span class="label">Point of Sale</span></button>
-      <button class="nav-btn" data-tab="products">👕 <span class="label">Products</span></button>
-      <button class="nav-btn" data-tab="orders">📦 <span class="label">Orders</span></button>
-      <button class="nav-btn" data-tab="reports">📈 <span class="label">Sales Reports</span></button>
-      <button class="nav-btn" data-tab="settings">⚙️ <span class="label">Settings</span></button>
+      <button class="nav-btn active" data-tab="dashboard"><span class="nav-icon"></span> <span class="label">Dashboard</span></button>
+      <button class="nav-btn" data-tab="pos"><span class="nav-icon"></span> <span class="label">Point of Sale</span></button>
+      <button class="nav-btn" data-tab="products"><span class="nav-icon"></span> <span class="label">Products</span></button>
+      <button class="nav-btn" data-tab="orders"><span class="nav-icon"></span> <span class="label">Orders</span></button>
+      <button class="nav-btn" data-tab="reports"><span class="nav-icon"></span> <span class="label">Sales Reports</span></button>
+      <button class="nav-btn" data-tab="editor"><span class="nav-icon"></span> <span class="label">Website Editor</span></button>
+      <button class="nav-btn" data-tab="settings"><span class="nav-icon"></span> <span class="label">Settings</span></button>
     </nav>
-    <button class="admin-logout" id="logoutBtn">⏻ Logout</button>
+    <button class="admin-logout" id="logoutBtn"><span id="logoutIcon"></span> <span class="label">Logout</span></button>
   </aside>
 
   <main class="admin-main">
@@ -109,7 +113,7 @@
     <section class="tab-panel" id="tab-products">
       <div class="admin-topbar">
         <h1>Manage Products</h1>
-        <button class="btn btn-gold btn-sm" id="addProductBtn">+ Add Product</button>
+        <button class="btn btn-gold btn-sm" id="addProductBtn"></button>
       </div>
       <div class="card">
         <table class="data-table">
@@ -141,7 +145,10 @@
 
     <!-- ---------- REPORTS ---------- -->
     <section class="tab-panel" id="tab-reports">
-      <div class="admin-topbar"><h1>Sales Reports</h1></div>
+      <div class="admin-topbar">
+        <h1>Sales Reports</h1>
+        <button class="btn btn-dark btn-sm" id="exportExcelBtn"></button>
+      </div>
       <div class="stat-cards" style="grid-template-columns:1fr 1fr;">
         <div class="stat-card"><div class="label">Today's Total Sales</div><div class="value" id="repToday">Rs. 0</div></div>
         <div class="stat-card"><div class="label">This Month's Total Sales</div><div class="value" id="repMonth">Rs. 0</div></div>
@@ -163,14 +170,107 @@
       </div>
     </section>
 
+    <!-- ---------- WEBSITE EDITOR ---------- -->
+    <section class="tab-panel" id="tab-editor">
+      <div class="admin-topbar"><h1>Website Editor</h1></div>
+      <p style="color:var(--grey);font-size:13px;margin-bottom:24px;max-width:640px;">
+        Everything here controls what your customers see on the live storefront —
+        text, images, colours and fonts. Changes apply the moment you click Save.
+      </p>
+
+      <form id="editorForm">
+        <div class="card">
+          <h3>Hero Section</h3>
+          <div class="form-group"><label>Eyebrow Text</label><input type="text" id="edHeroEyebrow"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Headline (first part)</label><input type="text" id="edHeroTitleMain"></div>
+            <div class="form-group"><label>Headline (gold accent word)</label><input type="text" id="edHeroTitleAccent"></div>
+          </div>
+          <div class="form-group"><label>Hero Description</label><textarea id="edHeroDesc" rows="3"></textarea></div>
+          <div class="form-group"><label>Hero Panel Caption</label><input type="text" id="edHeroCaption"></div>
+          <div class="form-group">
+            <label>Hero Image (optional — leave blank to keep the gold/black panel)</label>
+            <div class="image-preview" id="heroImgPreview"></div>
+            <input type="text" id="edHeroImage" placeholder="https://... image URL">
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>About / Brand Story Section</h3>
+          <div class="form-group"><label>Small Badge Text</label><input type="text" id="edAboutBadge"></div>
+          <div class="form-group"><label>Heading</label><input type="text" id="edAboutHeading"></div>
+          <div class="form-group"><label>Paragraph 1</label><textarea id="edAboutDesc" rows="3"></textarea></div>
+          <div class="form-group"><label>Paragraph 2</label><textarea id="edAboutDesc2" rows="2"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Stat 1 (value)</label><input type="text" id="edStat1Value"></div>
+            <div class="form-group"><label>Stat 1 (label)</label><input type="text" id="edStat1Label"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Stat 2 (value)</label><input type="text" id="edStat2Value"></div>
+            <div class="form-group"><label>Stat 2 (label)</label><input type="text" id="edStat2Label"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Stat 3 (value)</label><input type="text" id="edStat3Value"></div>
+            <div class="form-group"><label>Stat 3 (label)</label><input type="text" id="edStat3Label"></div>
+          </div>
+          <div class="form-group">
+            <label>About Image (optional)</label>
+            <div class="image-preview" id="aboutImgPreview"></div>
+            <input type="text" id="edAboutImage" placeholder="https://... image URL">
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Footer</h3>
+          <div class="form-group"><label>Footer About Text</label><textarea id="edFooterAbout" rows="2"></textarea></div>
+          <div class="form-group"><label>Footer Note (after the year)</label><input type="text" id="edFooterNote"></div>
+        </div>
+
+        <div class="card">
+          <h3>Colours</h3>
+          <div class="editor-grid">
+            <div>
+              <label style="display:block;font-size:12px;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Primary / Gold Accent</label>
+              <div class="color-field"><input type="color" id="edPrimaryColor"><input type="text" id="edPrimaryColorText"></div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Text Colour (Black)</label>
+              <div class="color-field"><input type="color" id="edTextColor"><input type="text" id="edTextColorText"></div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Background Colour (White)</label>
+              <div class="color-field"><input type="color" id="edBgColor"><input type="text" id="edBgColorText"></div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;text-transform:uppercase;color:var(--grey);margin-bottom:6px;">Gold Accent (Light Shade)</label>
+              <div class="color-field"><input type="color" id="edPrimaryLight"><input type="text" id="edPrimaryLightText"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Fonts</h3>
+          <p style="font-size:12px;color:var(--grey);margin-bottom:14px;">Pick a heading + body font pairing for the whole site.</p>
+          <div id="fontOptionsWrap"></div>
+          <div class="font-preview">
+            <div class="fp-heading" id="fontPreviewHeading" style="font-family:var(--serif);">Zionova — Wear the Statement</div>
+            <div class="fp-body" id="fontPreviewBody" style="font-family:var(--sans);">The quick brown fox jumps over the lazy dog. 0123456789</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-gold">Save Website Changes</button>
+        <button type="button" class="btn btn-outline" id="resetEditorBtn" style="margin-left:10px;">Reset to Defaults</button>
+      </form>
+    </section>
+
     <!-- ---------- SETTINGS ---------- -->
     <section class="tab-panel" id="tab-settings">
       <div class="admin-topbar"><h1>Settings</h1></div>
 
       <div class="card">
-        <h3>Brand Content</h3>
+        <h3>Social Media &amp; Contact Links</h3>
         <form id="brandForm">
-          <div class="form-group"><label>Brand Description</label><textarea id="setDesc" rows="3"></textarea></div>
+          <div class="form-group"><label>Contact Email</label><input type="text" id="setEmail"></div>
           <div class="form-row">
             <div class="form-group"><label>Instagram URL</label><input type="text" id="setInstagram"></div>
             <div class="form-group"><label>Facebook URL</label><input type="text" id="setFacebook"></div>
@@ -179,10 +279,50 @@
             <div class="form-group"><label>TikTok URL</label><input type="text" id="setTiktok"></div>
             <div class="form-group"><label>WhatsApp Link</label><input type="text" id="setWhatsapp"></div>
           </div>
-          <div class="form-group"><label>Contact Email</label><input type="text" id="setEmail"></div>
-          <div class="form-group"><label for="setSheetsUrl">Google Sheets Web App URL</label><input type="url" id="setSheetsUrl" placeholder="https://script.google.com/macros/s/.../exec"><small>Paste the deployed Apps Script web app URL to sync orders and reports.</small></div>
-          <button type="submit" class="btn btn-dark">Save Brand Settings</button>
+          <button type="submit" class="btn btn-dark">Save Social Links</button>
         </form>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <h3 style="margin:0;">Google Sheets Integration</h3>
+          <span class="status-pill" id="sheetStatusPill">Not Connected</span>
+        </div>
+        <p style="font-size:12px;color:var(--grey);margin:12px 0 18px;">
+          Every order (online + POS) can be sent automatically to a Google Sheet. Google doesn't allow
+          websites to write to Sheets directly, so this works through a small free "Apps Script" bridge
+          that you deploy once, inside your own Google account.
+        </p>
+
+        <div class="form-group">
+          <label>1. Copy this script into a new Apps Script project (in your Google Sheet: Extensions → Apps Script), paste it in, then click Deploy → New deployment → Web app → access "Anyone", and copy the resulting URL below.</label>
+          <div class="code-block" id="appsScriptCode"></div>
+        </div>
+
+        <div class="form-group">
+          <label>2. Paste your Web App URL here</label>
+          <input type="text" id="sheetWebAppUrl" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec">
+        </div>
+
+        <div class="toggle-row">
+          <div>
+            <strong style="font-size:13px;">Auto-sync new orders to this sheet</strong>
+            <div style="font-size:12px;color:var(--grey);">When on, every completed order (online + POS) is sent automatically.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="sheetEnabledToggle">
+            <span class="switch-track"></span>
+          </label>
+        </div>
+
+        <div class="modal-actions" style="margin-top:14px;">
+          <button class="btn btn-dark btn-sm" id="saveSheetBtn">Save Connection</button>
+          <button class="btn btn-outline btn-sm" id="testSheetBtn">Send Test Row</button>
+        </div>
+        <p style="font-size:11px;color:var(--grey);margin-top:10px;">
+          Note: because Apps Script doesn't send back a browser-readable response, "Send Test Row" cannot
+          confirm success automatically — check your Sheet for a new row after clicking it.
+        </p>
       </div>
 
       <div class="card">
@@ -226,6 +366,7 @@
 </div>
 
 <script src="data.js"></script>
+<script src="icons.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

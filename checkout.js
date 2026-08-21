@@ -2,6 +2,8 @@
    ZIONOVA — Checkout logic (checkout.html)
    ============================================================ */
 
+applyTheme();
+
 const SHIPPING_FEE = 350; // flat delivery fee, set to 0 for free delivery
 
 function renderOrderLines(){
@@ -65,7 +67,7 @@ document.querySelectorAll('.pay-method').forEach(el => {
 });
 
 /* ---------- Submit order ---------- */
-document.getElementById('customerForm').addEventListener('submit', async function(e){
+document.getElementById('customerForm').addEventListener('submit', function(e){
   e.preventDefault();
   const items = CartStore.detailedItems();
   const errorEl = document.getElementById('formError');
@@ -112,8 +114,6 @@ document.getElementById('customerForm').addEventListener('submit', async functio
     paymentMethod: selectedPayment,
     status: 'Paid'
   });
-
-  await SheetsStore.syncOrder(order);
 
   CartStore.clear();
   window.location.href = `receipt.html?order=${order.id}`;

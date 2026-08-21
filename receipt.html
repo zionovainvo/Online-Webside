@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Order Receipt — Zionova</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -27,13 +27,18 @@
     <p style="text-align:center;color:var(--grey);">Loading receipt...</p>
   </div>
   <div class="receipt-actions no-print">
-    <button class="btn btn-gold" onclick="window.print()">🖨 Print Bill</button>
+    <button class="btn btn-gold" id="printBtn"></button>
     <a href="index.html" class="btn btn-outline">Continue Shopping</a>
   </div>
 </div>
 
 <script src="data.js"></script>
+<script src="icons.js"></script>
 <script>
+applyTheme();
+document.getElementById('printBtn').innerHTML = icon('printer',16) + ' Print Bill';
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+
 function escapeHTML(str=''){
   return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
