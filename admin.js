@@ -1,12 +1,7 @@
 /* ============================================================
-   ZIONOVA — Admin / POS logic (admin.html)
+   ZIONOVA — Admin / POS logic (admin.html) — Firebase edition
    ============================================================ */
 
-applyTheme();
-
-function escapeHTML(str=''){
-  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
 let toastTimer;
 function showToast(msg){
   const toast = document.getElementById('toast');
@@ -16,60 +11,77 @@ function showToast(msg){
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
 }
 
-/* =====================================================
-   ICONS — wire up every icon slot once on load
-   ===================================================== */
-function paintStaticIcons(){
-  document.getElementById('loginLockIcon').innerHTML = icon('lock', 26);
-  document.getElementById('logoutIcon').innerHTML = icon('power', 16);
-  document.getElementById('addProductBtn').innerHTML = icon('plus', 14) + ' Add Product';
-  document.getElementById('exportExcelBtn').innerHTML = icon('excel', 14) + ' Export to Excel';
-  document.getElementById('backToStoreLink').innerHTML = `<a href="index.html">${icon('arrowLeft',12)} Back to store</a>`;
-
-  const navIconMap = { dashboard:'dashboard', pos:'pos', products:'shirt', orders:'box', reports:'chart', editor:'edit', settings:'gear' };
+/* ---------- Inject icons into static buttons (replaces emojis) ---------- */
+function injectIcons(){
+  const navIcons = { dashboard:'Dashboard', pos:'Point of Sale', products:'Products', orders:'Orders', reports:'Sales Reports', design:'Website Editor', settings:'Settings' };
+  const iconMap = { dashboard:'dashboard', pos:'pos', products:'shirt', orders:'box', reports:'chart', design:'palette', settings:'gear' };
   document.querySelectorAll('.nav-btn').forEach(btn => {
-    const slot = btn.querySelector('.nav-icon');
-    if(slot) slot.innerHTML = icon(navIconMap[btn.dataset.tab] || 'dashboard', 18);
+    const tab = btn.dataset.tab;
+    btn.innerHTML = `${icon(iconMap[tab])} <span class="label">${navIcons[tab]}</span>`;
   });
+  document.getElementById('logoutBtn').innerHTML = icon('power') + ' Logout';
+  document.getElementById('addProductBtn').innerHTML = icon('plus') + ' Add Product';
+  document.getElementById('exportExcelBtn').innerHTML = icon('download') + ' Export to Excel';
+  document.getElementById('sheetIcon').innerHTML = icon('sheet');
+  document.getElementById('firebaseIcon').innerHTML = icon('cloud');
 }
-paintStaticIcons();
+injectIcons();
+
+let liveProducts = [];
+let liveOrders = [];
+let unsubProducts = null, unsubOrders = null, unsubSettings = null;
 
 /* =====================================================
    AUTH GATE
    ===================================================== */
-function showApp(){
+function showApp(user){
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminShell').style.display = 'flex';
+  document.getElementById('currentAdminEmail').textContent = user.email;
+  document.getElementById('fbStatusDot').className = 'status-dot on';
+  document.getElementById('fbStatusText').textContent = 'Connected';
   initDashboard();
 }
 function showLogin(){
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('adminShell').style.display = 'none';
+  if(unsubProducts) unsubProducts();
+  if(unsubOrders) unsubOrders();
+  if(unsubSettings) unsubSettings();
 }
 
-if(AdminAuth.isLoggedIn()){
-  showApp();
-}else{
-  showLogin();
+function initAuth(){
+  if(!checkFirebaseConfigured()) return;
+  AdminAuth.onChange(user => { if(user) showApp(user); else showLogin(); });
 }
 
-document.getElementById('loginForm').addEventListener('submit', function(e){
+document.getElementById('loginForm').addEventListener('submit', async function(e){
   e.preventDefault();
   const user = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value;
   const errorEl = document.getElementById('loginError');
-  if(AdminAuth.login(user, pass)){
-    errorEl.textContent = '';
-    showApp();
-  }else{
-    errorEl.textContent = 'Invalid username or password.';
+  errorEl.textContent = '';
+  try{
+    await AdminAuth.login(user, pass);
+  }catch(err){
+    errorEl.textContent = 'Invalid email or password.';
+    console.error(err);
   }
 });
 
-document.getElementById('logoutBtn').addEventListener('click', function(){
-  AdminAuth.logout();
-  showLogin();
+document.getElementById('resetPassLink').addEventListener('click', async () => {
+  const email = document.getElementById('loginUser').value.trim();
+  if(!email){ document.getElementById('loginError').textContent = 'Type your email above first, then click "Forgot password?"'; return; }
+  try{
+    await AdminAuth.resetPassword(email);
+    document.getElementById('loginError').style.color = 'var(--success)';
+    document.getElementById('loginError').textContent = 'Password reset email sent.';
+  }catch(err){
+    document.getElementById('loginError').textContent = 'Could not send reset email — check the address.';
+  }
 });
+
+document.getElementById('logoutBtn').addEventListener('click', () => AdminAuth.logout());
 
 /* =====================================================
    TAB NAVIGATION
@@ -85,34 +97,53 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     if(btn.dataset.tab === 'products') renderProductsTable();
     if(btn.dataset.tab === 'orders') renderOrdersTable();
     if(btn.dataset.tab === 'reports') renderReports();
-    if(btn.dataset.tab === 'editor') loadEditorForm();
+    if(btn.dataset.tab === 'design') loadDesignForm();
     if(btn.dataset.tab === 'settings') loadSettingsForm();
   });
 });
 
 function initDashboard(){
-  renderDashboard();
-  renderPOS();
-  renderProductsTable();
-  renderOrdersTable();
-  renderReports();
-  loadEditorForm();
-  loadSettingsForm();
+  // Real-time listeners — any change from any device reflects here
+  // (and on the storefront) within a second or two.
+  unsubProducts = ProductStore.listen(products => {
+    liveProducts = products;
+    renderProductsTable();
+    renderPOS();
+    document.getElementById('statProducts').textContent = liveProducts.length;
+  });
+
+  unsubOrders = OrderStore.listen(orders => {
+    liveOrders = orders;
+    renderDashboard();
+    renderOrdersTable();
+    renderReports();
+  });
+
+  unsubSettings = SettingsStore.listen(settings => {
+    currentSettings = settings;
+    // keep design/settings forms in sync if the user is looking at them
+    if(document.getElementById('tab-design').classList.contains('active')) loadDesignForm();
+    if(document.getElementById('tab-settings').classList.contains('active')) loadSettingsForm();
+  });
+
+  buildFontOptions();
 }
+
+let currentSettings = {};
 
 /* =====================================================
    DASHBOARD
    ===================================================== */
 function renderDashboard(){
   document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  document.getElementById('statToday').textContent = formatMoney(OrderStore.todayTotal());
-  document.getElementById('statMonth').textContent = formatMoney(OrderStore.monthTotal());
-  document.getElementById('statOrders').textContent = OrderStore.getAll().length;
-  document.getElementById('statProducts').textContent = ProductStore.getAll().length;
+  document.getElementById('statToday').textContent = formatMoney(computeTodayTotal(liveOrders));
+  document.getElementById('statMonth').textContent = formatMoney(computeMonthTotal(liveOrders));
+  document.getElementById('statOrders').textContent = liveOrders.length;
+  document.getElementById('statProducts').textContent = liveProducts.length;
 
-  renderBars('weekBars', OrderStore.last7Days());
+  renderBars('weekBars', computeLast7Days(liveOrders));
 
-  const recent = OrderStore.getAll().slice(0, 6);
+  const recent = liveOrders.slice(0, 6);
   const tbody = document.querySelector('#recentOrdersTable tbody');
   tbody.innerHTML = recent.length ? recent.map(o => `
     <tr>
@@ -142,8 +173,7 @@ function renderBars(containerId, dataArr){
    ===================================================== */
 function renderProductsTable(){
   const tbody = document.getElementById('productsTable');
-  const products = ProductStore.getAll();
-  tbody.innerHTML = products.length ? products.map(p => {
+  tbody.innerHTML = liveProducts.length ? liveProducts.map(p => {
     const final = ProductStore.finalPrice(p);
     const inStock = Number(p.stock) > 0;
     return `
@@ -156,23 +186,20 @@ function renderProductsTable(){
       <td>${p.stock}</td>
       <td><span class="badge ${inStock ? 'badge-in' : 'badge-out'}">${inStock ? 'In Stock' : 'Out of Stock'}</span></td>
       <td>
-        <button class="btn btn-outline btn-sm" onclick="openProductModal('${p.id}')">${icon('edit',12)} Edit</button>
-        <button class="btn btn-danger" onclick="deleteProduct('${p.id}')">${icon('trash',12)}</button>
+        <button class="btn btn-outline btn-sm" onclick="openProductModal('${p.id}')">${icon('edit')} Edit</button>
+        <button class="btn btn-danger" onclick="deleteProduct('${p.id}')">${icon('trash')}</button>
       </td>
     </tr>`;
   }).join('') : `<tr><td colspan="8" class="empty-state">No products yet. Click "Add Product" to create one.</td></tr>`;
 }
 
-function deleteProduct(id){
+async function deleteProduct(id){
   if(confirm('Delete this product? This cannot be undone.')){
-    ProductStore.remove(id);
-    renderProductsTable();
-    renderPOS();
+    await ProductStore.remove(id);
     showToast('Product deleted');
   }
 }
 
-/* Product Modal */
 const productModalOverlay = document.getElementById('productModalOverlay');
 document.getElementById('addProductBtn').addEventListener('click', () => openProductModal());
 document.getElementById('cancelProductBtn').addEventListener('click', () => productModalOverlay.classList.remove('active'));
@@ -181,7 +208,7 @@ function openProductModal(id){
   document.getElementById('productForm').reset();
   document.getElementById('prodDiscount').value = 0;
   if(id){
-    const p = ProductStore.getById(id);
+    const p = liveProducts.find(x => x.id === id);
     document.getElementById('productModalTitle').textContent = 'Edit Product';
     document.getElementById('prodId').value = p.id;
     document.getElementById('prodName').value = p.name;
@@ -197,7 +224,7 @@ function openProductModal(id){
   productModalOverlay.classList.add('active');
 }
 
-document.getElementById('productForm').addEventListener('submit', function(e){
+document.getElementById('productForm').addEventListener('submit', async function(e){
   e.preventDefault();
   const id = document.getElementById('prodId').value;
   const data = {
@@ -208,16 +235,14 @@ document.getElementById('productForm').addEventListener('submit', function(e){
     description: document.getElementById('prodDesc').value.trim(),
     image: document.getElementById('prodImage').value.trim()
   };
-  if(id){
-    ProductStore.update(id, data);
-    showToast('Product updated');
-  }else{
-    ProductStore.add(data);
-    showToast('Product added');
+  try{
+    if(id){ await ProductStore.update(id, data); showToast('Product updated'); }
+    else{ await ProductStore.add(data); showToast('Product added'); }
+    productModalOverlay.classList.remove('active');
+  }catch(err){
+    console.error(err);
+    showToast('Failed to save — check your Firestore rules / connection');
   }
-  productModalOverlay.classList.remove('active');
-  renderProductsTable();
-  renderPOS();
 });
 
 /* =====================================================
@@ -228,7 +253,7 @@ let posCart = [];
 function renderPOS(){
   const grid = document.getElementById('posProducts');
   const search = (document.getElementById('posSearch').value || '').toLowerCase();
-  const products = ProductStore.getAll().filter(p => p.name.toLowerCase().includes(search));
+  const products = liveProducts.filter(p => p.name.toLowerCase().includes(search));
 
   grid.innerHTML = products.length ? products.map(p => {
     const final = ProductStore.finalPrice(p);
@@ -248,25 +273,17 @@ document.getElementById('posSearch').addEventListener('input', renderPOS);
 
 function posAddItem(productId){
   const existing = posCart.find(i => i.productId === productId);
-  if(existing) existing.qty += 1;
-  else posCart.push({ productId, qty: 1 });
+  if(existing) existing.qty += 1; else posCart.push({ productId, qty: 1 });
   renderPOSCart();
 }
-
 function posChangeQty(productId, qty){
-  if(qty <= 0){
-    posCart = posCart.filter(i => i.productId !== productId);
-  }else{
-    const item = posCart.find(i => i.productId === productId);
-    if(item) item.qty = qty;
-  }
+  if(qty <= 0) posCart = posCart.filter(i => i.productId !== productId);
+  else { const item = posCart.find(i => i.productId === productId); if(item) item.qty = qty; }
   renderPOSCart();
 }
-
 function posDetailedItems(){
-  const products = ProductStore.getAll();
   return posCart.map(item => {
-    const p = products.find(pp => pp.id === item.productId);
+    const p = liveProducts.find(pp => pp.id === item.productId);
     if(!p) return null;
     const unitPrice = ProductStore.finalPrice(p);
     return { productId: item.productId, name: p.name, unitPrice, qty: item.qty, lineTotal: unitPrice * item.qty };
@@ -279,10 +296,10 @@ function renderPOSCart(){
   wrap.innerHTML = items.length ? items.map(i => `
     <div class="order-line">
       <span class="name">${escapeHTML(i.name)}<br>
-        <small style="color:var(--grey);display:inline-flex;align-items:center;gap:6px;margin-top:4px;">
-          <button class="qty-btn" onclick="posChangeQty('${i.productId}', ${i.qty - 1})">${icon('minus',10)}</button>
+        <small style="color:var(--grey);display:inline-flex;align-items:center;gap:6px;">
+          <button class="qty-btn" onclick="posChangeQty('${i.productId}', ${i.qty - 1})">${icon('minus')}</button>
           ${i.qty}
-          <button class="qty-btn" onclick="posChangeQty('${i.productId}', ${i.qty + 1})">${icon('plus',10)}</button>
+          <button class="qty-btn" onclick="posChangeQty('${i.productId}', ${i.qty + 1})">${icon('plus')}</button>
         </small>
       </span>
       <span>${formatMoney(i.lineTotal)}</span>
@@ -294,42 +311,37 @@ function renderPOSCart(){
   document.getElementById('posTotal').textContent = formatMoney(total);
 }
 
-document.getElementById('posClearBtn').addEventListener('click', () => {
-  posCart = [];
-  renderPOSCart();
-});
+document.getElementById('posClearBtn').addEventListener('click', () => { posCart = []; renderPOSCart(); });
 
-document.getElementById('posCheckoutBtn').addEventListener('click', () => {
+document.getElementById('posCheckoutBtn').addEventListener('click', async () => {
   const items = posDetailedItems();
-  if(!items.length){
-    showToast('Add at least one item first');
-    return;
-  }
+  if(!items.length){ showToast('Add at least one item first'); return; }
   const customerName = document.getElementById('posCustomerName').value.trim() || 'Walk-in Customer';
   const paymentMethod = document.getElementById('posPaymentMethod').value;
   const subtotal = items.reduce((s,i) => s + i.lineTotal, 0);
 
-  const order = OrderStore.create({
-    source: 'pos',
-    items,
-    subtotal,
-    shipping: 0,
-    total: subtotal,
-    customer: { name: customerName },
-    paymentMethod,
-    status: 'Paid'
-  });
+  const btn = document.getElementById('posCheckoutBtn');
+  btn.disabled = true; btn.textContent = 'Processing…';
 
-  posCart = [];
-  document.getElementById('posCustomerName').value = '';
-  renderPOSCart();
-  renderPOS();
-  showToast(`Sale completed — ${order.id}`);
-  renderDashboard();
-  renderOrdersTable();
+  try{
+    const order = await OrderStore.create({
+      source: 'pos', items, subtotal, shipping: 0, total: subtotal,
+      customer: { name: customerName }, paymentMethod, status: 'Paid'
+    });
 
-  if(confirm('Sale completed! Open printable receipt now?')){
-    window.open(`receipt.html?order=${order.id}`, '_blank');
+    posCart = [];
+    document.getElementById('posCustomerName').value = '';
+    renderPOSCart();
+    showToast(`Sale completed — ${order.id}`);
+
+    if(confirm('Sale completed! Open printable receipt now?')){
+      window.open(`receipt.html?order=${order.id}`, '_blank');
+    }
+  }catch(err){
+    console.error(err);
+    showToast('Sale failed — check your connection');
+  }finally{
+    btn.disabled = false; btn.textContent = 'Complete Sale';
   }
 });
 
@@ -341,11 +353,9 @@ function renderOrdersTable(){
   const sourceFilter = document.getElementById('orderSourceFilter').value;
   const dateFilter = document.getElementById('orderDateFilter').value;
 
-  let orders = OrderStore.getAll();
+  let orders = liveOrders;
   if(sourceFilter !== 'all') orders = orders.filter(o => o.source === sourceFilter);
-  if(dateFilter){
-    orders = orders.filter(o => new Date(o.date).toISOString().slice(0,10) === dateFilter);
-  }
+  if(dateFilter) orders = orders.filter(o => new Date(o.date).toISOString().slice(0,10) === dateFilter);
 
   tbody.innerHTML = orders.length ? orders.map(o => `
     <tr>
@@ -356,9 +366,7 @@ function renderOrdersTable(){
       <td>${escapeHTML(o.paymentMethod)}</td>
       <td>${o.source === 'pos' ? 'In-Store' : 'Online'}</td>
       <td>${new Date(o.date).toLocaleString()}</td>
-      <td>
-        <a class="btn btn-outline btn-sm" href="receipt.html?order=${o.id}" target="_blank">${icon('printer',12)} View Bill</a>
-      </td>
+      <td><a class="btn btn-outline btn-sm" href="receipt.html?order=${o.id}" target="_blank">${icon('print')} Bill</a></td>
     </tr>
   `).join('') : `<tr><td colspan="8" class="empty-state">No orders match this filter.</td></tr>`;
 }
@@ -375,13 +383,13 @@ document.getElementById('clearOrderFilter').addEventListener('click', () => {
    REPORTS
    ===================================================== */
 function renderReports(){
-  document.getElementById('repToday').textContent = formatMoney(OrderStore.todayTotal());
-  document.getElementById('repMonth').textContent = formatMoney(OrderStore.monthTotal());
-  renderBars('dailyReportBars', OrderStore.last7Days());
-  renderBars('monthlyReportBars', OrderStore.last6Months());
+  document.getElementById('repToday').textContent = formatMoney(computeTodayTotal(liveOrders));
+  document.getElementById('repMonth').textContent = formatMoney(computeMonthTotal(liveOrders));
+  renderBars('dailyReportBars', computeLast7Days(liveOrders));
+  renderBars('monthlyReportBars', computeLast6Months(liveOrders));
 
   const tally = {};
-  OrderStore.getAll().forEach(o => {
+  liveOrders.forEach(o => {
     o.items.forEach(i => {
       if(!tally[i.name]) tally[i.name] = { units: 0, revenue: 0 };
       tally[i.name].units += i.qty;
@@ -395,370 +403,157 @@ function renderReports(){
   `).join('') : `<tr><td colspan="3" class="empty-state">No sales data yet.</td></tr>`;
 }
 
-/* ---------- Export to Excel (SheetJS) ---------- */
-document.getElementById('exportExcelBtn').addEventListener('click', function(){
-  if(typeof XLSX === 'undefined'){
-    showToast('Excel library failed to load — check your internet connection');
-    return;
-  }
-  const orders = OrderStore.getAll();
-  if(!orders.length){
-    showToast('No orders to export yet');
-    return;
-  }
-
-  // Sheet 1: every order as one row
-  const orderRows = orders.map(o => ({
-    'Order ID': o.id,
-    'Date': new Date(o.date).toLocaleString(),
-    'Source': o.source === 'pos' ? 'In-Store (POS)' : 'Online',
-    'Customer Name': o.customer.name || 'Walk-in Customer',
-    'Phone': o.customer.phone || '',
-    'Email': o.customer.email || '',
-    'Items': o.items.map(i => `${i.name} x${i.qty}`).join(', '),
-    'Subtotal': o.subtotal,
-    'Shipping': o.shipping,
-    'Total': o.total,
-    'Payment Method': o.paymentMethod,
-    'Status': o.status
-  }));
-
-  // Sheet 2: daily totals for the current month
-  const dailyMap = {};
-  OrderStore.ordersInCurrentMonth().forEach(o => {
-    const day = new Date(o.date).toLocaleDateString();
-    dailyMap[day] = (dailyMap[day] || 0) + o.total;
+document.getElementById('exportExcelBtn').addEventListener('click', () => {
+  if(!liveOrders.length){ showToast('No orders to export yet'); return; }
+  const now = new Date();
+  const monthOrders = liveOrders.filter(o => {
+    const d = new Date(o.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   });
-  const dailyRows = Object.entries(dailyMap).map(([date, total]) => ({ Date: date, 'Total Sales (Rs.)': total }));
-
-  // Sheet 3: monthly totals, last 6 months
-  const monthlyRows = OrderStore.last6Months().map(m => ({ Month: m.label, 'Total Sales (Rs.)': m.total }));
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(orderRows), 'All Orders');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dailyRows), 'Daily Sales (This Month)');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(monthlyRows), 'Monthly Sales (6mo)');
-
-  const filename = `Zionova-Sales-Report-${new Date().toISOString().slice(0,10)}.xlsx`;
-  XLSX.writeFile(wb, filename);
-  showToast('Excel report downloaded');
+  const filename = `Zionova-Sales-${now.toLocaleString('en-US',{month:'long'})}-${now.getFullYear()}.xlsx`;
+  exportOrdersToExcel(monthOrders.length ? monthOrders : liveOrders, filename);
+  showToast('Excel file downloaded');
 });
 
 /* =====================================================
-   WEBSITE EDITOR
+   WEBSITE EDITOR (Design tab)
    ===================================================== */
-const FONT_PAIRS = [
-  {
-    name: 'Playfair Display + Poppins',
-    tag: 'Classic Luxury (default)',
-    heading: "'Playfair Display', Georgia, serif",
-    body: "'Poppins', Arial, sans-serif",
-    url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap'
-  },
-  {
-    name: 'Cormorant Garamond + Montserrat',
-    tag: 'Elegant Editorial',
-    heading: "'Cormorant Garamond', Georgia, serif",
-    body: "'Montserrat', Arial, sans-serif",
-    url: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Montserrat:wght@300;400;500;600;700&display=swap'
-  },
-  {
-    name: 'Bodoni Moda + Inter',
-    tag: 'Bold High Fashion',
-    heading: "'Bodoni Moda', Georgia, serif",
-    body: "'Inter', Arial, sans-serif",
-    url: 'https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap'
-  },
-  {
-    name: 'Marcellus + Lato',
-    tag: 'Minimal Classic',
-    heading: "'Marcellus', Georgia, serif",
-    body: "'Lato', Arial, sans-serif",
-    url: 'https://fonts.googleapis.com/css2?family=Marcellus&family=Lato:wght@300;400;700&display=swap'
-  },
-  {
-    name: 'Cinzel + Raleway',
-    tag: 'Bold Statement',
-    heading: "'Cinzel', Georgia, serif",
-    body: "'Raleway', Arial, sans-serif",
-    url: 'https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Raleway:wght@300;400;500;600;700&display=swap'
-  }
-];
-
-let selectedFontIndex = 0;
-
-function loadEditorForm(){
-  const site = SiteStore.get();
-  const c = site.content, images = site.images, theme = site.theme;
-
-  document.getElementById('edHeroEyebrow').value = c.heroEyebrow;
-  document.getElementById('edHeroTitleMain').value = c.heroTitleMain;
-  document.getElementById('edHeroTitleAccent').value = c.heroTitleAccent;
-  document.getElementById('edHeroDesc').value = c.heroDesc;
-  document.getElementById('edHeroCaption').value = c.heroVisualCaption;
-  document.getElementById('edHeroImage').value = images.heroImage;
-
-  document.getElementById('edAboutBadge').value = c.aboutBadge;
-  document.getElementById('edAboutHeading').value = c.aboutHeading;
-  document.getElementById('edAboutDesc').value = c.aboutDesc;
-  document.getElementById('edAboutDesc2').value = c.aboutDesc2;
-  document.getElementById('edStat1Value').value = c.stat1Value;
-  document.getElementById('edStat1Label').value = c.stat1Label;
-  document.getElementById('edStat2Value').value = c.stat2Value;
-  document.getElementById('edStat2Label').value = c.stat2Label;
-  document.getElementById('edStat3Value').value = c.stat3Value;
-  document.getElementById('edStat3Label').value = c.stat3Label;
-  document.getElementById('edAboutImage').value = images.aboutImage;
-
-  document.getElementById('edFooterAbout').value = c.footerAbout;
-  document.getElementById('edFooterNote').value = c.footerNote;
-
-  document.getElementById('edPrimaryColor').value = theme.primaryColor;
-  document.getElementById('edPrimaryColorText').value = theme.primaryColor;
-  document.getElementById('edTextColor').value = theme.textColor;
-  document.getElementById('edTextColorText').value = theme.textColor;
-  document.getElementById('edBgColor').value = theme.bgColor;
-  document.getElementById('edBgColorText').value = theme.bgColor;
-  document.getElementById('edPrimaryLight').value = theme.primaryLight;
-  document.getElementById('edPrimaryLightText').value = theme.primaryLight;
-
-  syncColorPickers();
-  renderImagePreviews();
-
-  selectedFontIndex = FONT_PAIRS.findIndex(f => f.heading === theme.headingFont);
-  if(selectedFontIndex === -1) selectedFontIndex = 0;
-  renderFontOptions();
-}
-
-function syncColorPickers(){
-  bindColorPair('edPrimaryColor', 'edPrimaryColorText');
-  bindColorPair('edTextColor', 'edTextColorText');
-  bindColorPair('edBgColor', 'edBgColorText');
-  bindColorPair('edPrimaryLight', 'edPrimaryLightText');
-}
-function bindColorPair(colorId, textId){
-  const colorEl = document.getElementById(colorId);
-  const textEl = document.getElementById(textId);
-  colorEl.oninput = () => { textEl.value = colorEl.value; };
-  textEl.oninput = () => { if(/^#[0-9A-Fa-f]{6}$/.test(textEl.value)) colorEl.value = textEl.value; };
-}
-
-function renderImagePreviews(){
-  const heroUrl = document.getElementById('edHeroImage').value.trim();
-  const aboutUrl = document.getElementById('edAboutImage').value.trim();
-  document.getElementById('heroImgPreview').innerHTML = heroUrl
-    ? `<img src="${escapeHTML(heroUrl)}" onerror="this.parentElement.innerHTML='Image failed to load'">`
-    : `No image set — showing default gold/black panel`;
-  document.getElementById('aboutImgPreview').innerHTML = aboutUrl
-    ? `<img src="${escapeHTML(aboutUrl)}" onerror="this.parentElement.innerHTML='Image failed to load'">`
-    : `No image set — showing default bordered panel`;
-}
-document.getElementById('edHeroImage').addEventListener('input', renderImagePreviews);
-document.getElementById('edAboutImage').addEventListener('input', renderImagePreviews);
-
-function renderFontOptions(){
-  const wrap = document.getElementById('fontOptionsWrap');
-  wrap.innerHTML = FONT_PAIRS.map((f, idx) => `
-    <div class="font-option ${idx === selectedFontIndex ? 'active' : ''}" data-idx="${idx}">
-      <strong style="font-family:${f.heading};font-size:15px;">${escapeHTML(f.name)}</strong>
-      <div style="font-size:11px;color:var(--grey);margin-top:3px;">${escapeHTML(f.tag)}</div>
+function buildFontOptions(){
+  const wrap = document.getElementById('fontOptions');
+  wrap.innerHTML = Object.entries(FONT_PAIRS).map(([key, f]) => `
+    <div class="font-option" data-font="${key}">
+      <div class="preview" style="font-family:${f.serif.split(',')[0]}, serif;">Zionova</div>
+      <div class="label">${f.label}</div>
     </div>
   `).join('');
   wrap.querySelectorAll('.font-option').forEach(el => {
     el.addEventListener('click', () => {
-      selectedFontIndex = parseInt(el.dataset.idx, 10);
-      renderFontOptions();
-      updateFontPreview();
+      wrap.querySelectorAll('.font-option').forEach(o => o.classList.remove('active'));
+      el.classList.add('active');
     });
   });
-  updateFontPreview();
 }
 
-function updateFontPreview(){
-  const f = FONT_PAIRS[selectedFontIndex];
-  // Load the chosen Google Font just for the live preview box
-  let previewLink = document.getElementById('fontPreviewLink');
-  if(!previewLink){
-    previewLink = document.createElement('link');
-    previewLink.id = 'fontPreviewLink';
-    previewLink.rel = 'stylesheet';
-    document.head.appendChild(previewLink);
-  }
-  previewLink.href = f.url;
-  document.getElementById('fontPreviewHeading').style.fontFamily = f.heading;
-  document.getElementById('fontPreviewBody').style.fontFamily = f.body;
+function loadDesignForm(){
+  const s = currentSettings;
+  document.getElementById('d_tagline').value = s.tagline || '';
+  document.getElementById('d_description').value = s.description || '';
+  document.getElementById('d_aboutText').value = s.aboutText || '';
+  document.getElementById('d_heroImage').value = s.heroImageUrl || '';
+  document.getElementById('d_aboutImage').value = s.aboutImageUrl || '';
+
+  document.getElementById('d_colorBg').value = s.colorBg || '#ffffff';
+  document.getElementById('d_colorBgText').value = s.colorBg || '#ffffff';
+  document.getElementById('d_colorText').value = s.colorText || '#0d0d0d';
+  document.getElementById('d_colorTextText').value = s.colorText || '#0d0d0d';
+  document.getElementById('d_colorGold').value = s.colorGold || '#c9a227';
+  document.getElementById('d_colorGoldText').value = s.colorGold || '#c9a227';
+
+  document.querySelectorAll('.font-option').forEach(el => {
+    el.classList.toggle('active', el.dataset.font === (s.fontPair || 'playfair-poppins'));
+  });
 }
 
-document.getElementById('editorForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  const site = SiteStore.get();
-  const f = FONT_PAIRS[selectedFontIndex];
-
-  site.content = {
-    ...site.content,
-    heroEyebrow: document.getElementById('edHeroEyebrow').value.trim(),
-    heroTitleMain: document.getElementById('edHeroTitleMain').value.trim(),
-    heroTitleAccent: document.getElementById('edHeroTitleAccent').value.trim(),
-    heroDesc: document.getElementById('edHeroDesc').value.trim(),
-    heroVisualCaption: document.getElementById('edHeroCaption').value.trim(),
-    aboutBadge: document.getElementById('edAboutBadge').value.trim(),
-    aboutHeading: document.getElementById('edAboutHeading').value.trim(),
-    aboutDesc: document.getElementById('edAboutDesc').value.trim(),
-    aboutDesc2: document.getElementById('edAboutDesc2').value.trim(),
-    stat1Value: document.getElementById('edStat1Value').value.trim(),
-    stat1Label: document.getElementById('edStat1Label').value.trim(),
-    stat2Value: document.getElementById('edStat2Value').value.trim(),
-    stat2Label: document.getElementById('edStat2Label').value.trim(),
-    stat3Value: document.getElementById('edStat3Value').value.trim(),
-    stat3Label: document.getElementById('edStat3Label').value.trim(),
-    footerAbout: document.getElementById('edFooterAbout').value.trim(),
-    footerNote: document.getElementById('edFooterNote').value.trim()
-  };
-  site.images = {
-    heroImage: document.getElementById('edHeroImage').value.trim(),
-    aboutImage: document.getElementById('edAboutImage').value.trim()
-  };
-  site.theme = {
-    primaryColor: document.getElementById('edPrimaryColorText').value.trim() || '#c9a227',
-    primaryLight: document.getElementById('edPrimaryLightText').value.trim() || '#e6c85a',
-    primaryDark: site.theme.primaryDark,
-    textColor: document.getElementById('edTextColorText').value.trim() || '#0d0d0d',
-    bgColor: document.getElementById('edBgColorText').value.trim() || '#ffffff',
-    headingFont: f.heading,
-    bodyFont: f.body,
-    googleFontsUrl: f.url
-  };
-
-  SiteStore.save(site);
-  applyTheme(); // re-theme the admin panel itself too
-  showToast('Website updated — changes are now live on your storefront');
+// keep color swatch <-> text input in sync
+['Bg','Text','Gold'].forEach(key => {
+  const colorEl = document.getElementById('d_color' + key);
+  const textEl = document.getElementById('d_color' + key + 'Text');
+  colorEl.addEventListener('input', () => textEl.value = colorEl.value);
+  textEl.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(textEl.value)) colorEl.value = textEl.value; });
 });
 
-document.getElementById('resetEditorBtn').addEventListener('click', function(){
-  if(confirm('Reset all website content, images, colours and fonts back to the original Zionova defaults?')){
-    SiteStore.reset();
-    loadEditorForm();
-    applyTheme();
-    showToast('Website reset to defaults');
-  }
+document.getElementById('contentForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  await SettingsStore.save({
+    tagline: document.getElementById('d_tagline').value.trim(),
+    description: document.getElementById('d_description').value.trim(),
+    aboutText: document.getElementById('d_aboutText').value.trim()
+  });
+  showToast('Content saved — live on your site now');
+});
+
+document.getElementById('imagesForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  await SettingsStore.save({
+    heroImageUrl: document.getElementById('d_heroImage').value.trim(),
+    aboutImageUrl: document.getElementById('d_aboutImage').value.trim()
+  });
+  showToast('Images saved — live on your site now');
+});
+
+document.getElementById('saveColorsBtn').addEventListener('click', async () => {
+  await SettingsStore.save({
+    colorBg: document.getElementById('d_colorBgText').value.trim(),
+    colorText: document.getElementById('d_colorTextText').value.trim(),
+    colorGold: document.getElementById('d_colorGoldText').value.trim()
+  });
+  showToast('Colours saved — live on your site now');
+});
+
+document.getElementById('saveFontBtn').addEventListener('click', async () => {
+  const active = document.querySelector('.font-option.active');
+  const fontPair = active ? active.dataset.font : 'playfair-poppins';
+  await SettingsStore.save({ fontPair });
+  showToast('Font saved — live on your site now');
 });
 
 /* =====================================================
-   SETTINGS — Social links
+   SETTINGS TAB
    ===================================================== */
 function loadSettingsForm(){
-  const site = SiteStore.get();
-  const brand = site.brand;
-  document.getElementById('setEmail').value = brand.email || '';
-  document.getElementById('setInstagram').value = brand.instagram || '';
-  document.getElementById('setFacebook').value = brand.facebook || '';
-  document.getElementById('setTiktok').value = brand.tiktok || '';
-  document.getElementById('setWhatsapp').value = brand.whatsapp || '';
+  const s = currentSettings;
+  document.getElementById('setInstagram').value = s.instagram || '';
+  document.getElementById('setFacebook').value = s.facebook || '';
+  document.getElementById('setTiktok').value = s.tiktok || '';
+  document.getElementById('setWhatsapp').value = s.whatsapp || '';
+  document.getElementById('setEmail').value = s.email || '';
+  document.getElementById('setShipping').value = s.shippingFee ?? 350;
 
-  const creds = AdminAuth.getCredentials();
-  document.getElementById('setUsername').value = creds.username;
-  document.getElementById('setPassword').value = '';
-
-  loadSheetSettings();
+  document.getElementById('sheetWebhookUrl').value = s.sheetWebhookUrl || '';
+  const connected = !!s.sheetWebhookUrl;
+  document.getElementById('sheetStatusDot').className = 'status-dot ' + (connected ? 'on' : 'off');
+  document.getElementById('sheetStatusText').textContent = connected ? 'Connected' : 'Not connected';
 }
 
-document.getElementById('brandForm').addEventListener('submit', function(e){
+document.getElementById('brandForm').addEventListener('submit', async function(e){
   e.preventDefault();
-  SiteStore.saveSection('brand', {
-    email: document.getElementById('setEmail').value.trim(),
+  await SettingsStore.save({
     instagram: document.getElementById('setInstagram').value.trim(),
     facebook: document.getElementById('setFacebook').value.trim(),
     tiktok: document.getElementById('setTiktok').value.trim(),
-    whatsapp: document.getElementById('setWhatsapp').value.trim()
+    whatsapp: document.getElementById('setWhatsapp').value.trim(),
+    email: document.getElementById('setEmail').value.trim(),
+    shippingFee: parseFloat(document.getElementById('setShipping').value) || 0
   });
-  showToast('Social links updated — changes are now live on your storefront');
+  showToast('Settings saved — live on your site now');
 });
 
-document.getElementById('credsForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  const username = document.getElementById('setUsername').value.trim();
-  const password = document.getElementById('setPassword').value;
-  if(!username || !password){ showToast('Please fill both fields'); return; }
-  AdminAuth.setCredentials(username, password);
-  showToast('Login credentials updated');
+document.getElementById('saveSheetBtn').addEventListener('click', async () => {
+  const url = document.getElementById('sheetWebhookUrl').value.trim();
+  await SettingsStore.save({ sheetWebhookUrl: url });
+  showToast(url ? 'Google Sheet connected' : 'Google Sheet disconnected');
 });
 
-/* =====================================================
-   SETTINGS — Google Sheets Integration
-   ===================================================== */
-const APPS_SCRIPT_SNIPPET = `function doPost(e) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = JSON.parse(e.postData.contents);
-
-  // Write header row once if the sheet is empty
-  if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Order ID','Date','Customer','Phone','Email','Items',
-                      'Subtotal','Shipping','Total','Payment','Source','Status']);
+document.getElementById('testSheetBtn').addEventListener('click', async () => {
+  const url = document.getElementById('sheetWebhookUrl').value.trim();
+  if(!url){ showToast('Paste your Web App URL first'); return; }
+  try{
+    await testSheetConnection(url);
+    showToast('Test row sent — check your Google Sheet');
+  }catch(err){
+    showToast('Could not reach that URL');
   }
-
-  if (data.test) {
-    sheet.appendRow(['TEST', new Date(), data.message, '', '', '', '', '', '', '', '', '']);
-  } else {
-    sheet.appendRow([
-      data.orderId, data.date, data.customerName, data.customerPhone,
-      data.customerEmail, data.items, data.subtotal, data.shipping,
-      data.total, data.paymentMethod, data.source, data.status
-    ]);
-  }
-
-  return ContentService.createTextOutput('OK');
-}`;
-
-function loadSheetSettings(){
-  document.getElementById('appsScriptCode').textContent = APPS_SCRIPT_SNIPPET;
-  const cfg = GoogleSheetStore.get();
-  document.getElementById('sheetWebAppUrl').value = cfg.webAppUrl || '';
-  document.getElementById('sheetEnabledToggle').checked = !!cfg.enabled;
-  updateSheetStatusPill(cfg);
-}
-
-function updateSheetStatusPill(cfg){
-  const pill = document.getElementById('sheetStatusPill');
-  if(cfg.enabled && cfg.webAppUrl){
-    pill.textContent = 'Connected & Syncing';
-    pill.className = 'status-pill status-connected';
-  }else{
-    pill.textContent = 'Not Connected';
-    pill.className = 'status-pill status-disconnected';
-  }
-}
-
-document.getElementById('saveSheetBtn').addEventListener('click', function(){
-  const url = document.getElementById('sheetWebAppUrl').value.trim();
-  const enabled = document.getElementById('sheetEnabledToggle').checked;
-  if(enabled && !url){
-    showToast('Please paste your Web App URL first');
-    return;
-  }
-  const cfg = { webAppUrl: url, enabled };
-  GoogleSheetStore.save(cfg);
-  updateSheetStatusPill(cfg);
-  showToast('Google Sheet connection saved');
 });
 
-document.getElementById('testSheetBtn').addEventListener('click', function(){
-  const url = document.getElementById('sheetWebAppUrl').value.trim();
-  if(!url){
-    showToast('Paste your Web App URL first');
-    return;
+document.getElementById('sendResetBtn').addEventListener('click', async () => {
+  const user = AdminAuth.currentUser();
+  if(!user) return;
+  try{
+    await AdminAuth.resetPassword(user.email);
+    showToast('Password reset email sent to ' + user.email);
+  }catch(err){
+    showToast('Failed to send reset email');
   }
-  testSheetConnection(url);
-  showToast('Test row sent — check your Google Sheet');
 });
 
-/* =====================================================
-   Live sync — if an order comes in from another tab (e.g. a
-   customer checking out on the storefront tab) while the admin
-   panel is open, refresh the relevant views automatically.
-   ===================================================== */
-window.onZionovaStorageChange = function(key){
-  if(!AdminAuth.isLoggedIn()) return;
-  if(key === STORE_KEYS.orders){ renderDashboard(); renderOrdersTable(); renderReports(); }
-  if(key === STORE_KEYS.products){ renderProductsTable(); renderPOS(); }
-  if(key === STORE_KEYS.site){ applyTheme(); }
-};
+initAuth();

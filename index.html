@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zionova — Premium Streetwear</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -21,10 +21,7 @@
       <a href="#connect">Connect</a>
     </nav>
     <div class="nav-actions">
-      <button class="icon-btn" id="cartToggle" title="Cart" aria-label="Open cart">
-        <span id="bagIcon"></span>
-        <span class="cart-badge" id="cartCount">0</span>
-      </button>
+      <button class="icon-btn" id="cartToggle" title="Cart" aria-label="Open cart"></button>
     </div>
   </div>
 </header>
@@ -33,7 +30,7 @@
 <section class="hero" id="home">
   <div class="hero-inner">
     <div>
-      <span class="hero-eyebrow" id="heroEyebrow">Premium Streetwear Label</span>
+      <span class="hero-eyebrow">Premium Streetwear Label</span>
       <h1 id="heroTitle">Wear the <em>Statement</em>.</h1>
       <p id="heroDesc">Zionova is a premium streetwear label built for those who lead, not follow.</p>
       <div class="hero-cta">
@@ -42,7 +39,7 @@
       </div>
     </div>
     <div class="hero-visual" id="heroVisual">
-      <div class="hero-visual-caption" id="heroCaption">The Gold Standard Collection — 2026</div>
+      <div class="hero-visual-caption">The Gold Standard Collection — 2026</div>
     </div>
   </div>
 </section>
@@ -50,16 +47,16 @@
 <!-- ================= ABOUT ================= -->
 <section class="about" id="about">
   <div class="container about-grid">
-    <div class="about-visual" id="aboutVisual"><span id="aboutBadgeText">Est. 2026</span></div>
+    <div class="about-visual" id="aboutVisual">Est. 2026</div>
     <div class="about-text">
       <span class="section-label">The Brand</span>
-      <h2 id="aboutHeading">About Zionova</h2>
-      <p id="aboutDesc">Zionova is a premium streetwear label.</p>
-      <p id="aboutDesc2">Fashion made to be felt, not just worn.</p>
+      <h2>About Zionova</h2>
+      <p id="aboutDesc">Zionova is a premium streetwear label built for those who lead, not follow.</p>
+      <p id="aboutText2">From the cut of the collar to the weight of the cotton, every detail is considered.</p>
       <div class="stat-row">
-        <div class="stat"><b id="stat1Value">4.9★</b><span id="stat1Label">Customer Rating</span></div>
-        <div class="stat"><b id="stat2Value">2K+</b><span id="stat2Label">Happy Customers</span></div>
-        <div class="stat"><b id="stat3Value">100%</b><span id="stat3Label">Premium Cotton</span></div>
+        <div class="stat"><b>4.9★</b><span>Customer Rating</span></div>
+        <div class="stat"><b>2K+</b><span>Happy Customers</span></div>
+        <div class="stat"><b>100%</b><span>Premium Cotton</span></div>
       </div>
     </div>
   </div>
@@ -71,7 +68,9 @@
     <span class="section-label">Latest Drop</span>
     <h2 class="section-title">Shop T-Shirts</h2>
     <p class="section-sub">Premium cotton tees, designed and finished with signature Zionova gold detailing.</p>
-    <div class="product-grid" id="productGrid"></div>
+    <div class="product-grid" id="productGrid">
+      <div class="empty-note">Loading products…</div>
+    </div>
   </div>
 </section>
 
@@ -88,7 +87,7 @@
   <div class="container footer-grid">
     <div>
       <h4>ZIO<span class="gold-text">NOVA</span></h4>
-      <p id="footerAbout">Premium streetwear crafted for those who lead.</p>
+      <p id="footerTagline">Premium streetwear crafted for those who lead.</p>
     </div>
     <div>
       <h4>Shop</h4>
@@ -104,7 +103,7 @@
     </div>
   </div>
   <div class="container footer-bottom">
-    <span>&copy; <span id="year"></span> Zionova. <span id="footerNote">All rights reserved.</span></span>
+    <span>&copy; <span id="year"></span> Zionova. All rights reserved.</span>
     <a href="admin.html" style="opacity:.5;">Staff Login</a>
   </div>
 </footer>
@@ -114,22 +113,25 @@
 <aside class="cart-drawer" id="cartDrawer">
   <div class="cart-header">
     <h3>Your Bag</h3>
-    <button class="close-btn" id="closeCart"><span id="closeIcon"></span></button>
+    <button class="close-btn" id="closeCart"></button>
   </div>
   <div class="cart-items" id="cartItems"></div>
   <div class="cart-footer">
-    <div class="cart-total-row">
-      <span>Subtotal</span>
-      <span id="cartSubtotal">Rs. 0.00</span>
-    </div>
+    <div class="cart-total-row"><span>Subtotal</span><span id="cartSubtotal">Rs. 0.00</span></div>
     <a href="checkout.html" class="btn btn-gold btn-block" id="checkoutBtn">Proceed to Checkout</a>
   </div>
 </aside>
 
 <div class="toast" id="toast"></div>
 
-<script src="data.js"></script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="firebase-init.js"></script>
 <script src="icons.js"></script>
+<script src="store.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

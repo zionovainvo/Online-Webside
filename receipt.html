@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Order Receipt — Zionova</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link id="baseFontLink" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,35 +23,46 @@
 
 <div class="receipt-wrap">
   <div class="receipt" id="receiptContent">
-    <!-- injected by JS -->
     <p style="text-align:center;color:var(--grey);">Loading receipt...</p>
   </div>
   <div class="receipt-actions no-print">
-    <button class="btn btn-gold" id="printBtn"></button>
+    <button class="btn btn-gold" onclick="window.print()">Print Bill</button>
     <a href="index.html" class="btn btn-outline">Continue Shopping</a>
   </div>
 </div>
 
-<script src="data.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="firebase-init.js"></script>
 <script src="icons.js"></script>
+<script src="store.js"></script>
 <script>
-applyTheme();
-document.getElementById('printBtn').innerHTML = icon('printer',16) + ' Print Bill';
-document.getElementById('printBtn').addEventListener('click', () => window.print());
+async function init(){
+  if(!checkFirebaseConfigured()) return;
 
-function escapeHTML(str=''){
-  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
+  const settings = await SettingsStore.get();
+  applySiteSettings(settings);
 
-const params = new URLSearchParams(window.location.search);
-const orderId = params.get('order');
-const order = orderId ? OrderStore.getById(orderId) : null;
-const brand = BrandStore.get();
-const target = document.getElementById('receiptContent');
+  const printBtn = document.querySelector('.receipt-actions .btn-gold');
+  printBtn.innerHTML = icon('print') + ' Print Bill';
 
-if(!order){
-  target.innerHTML = `<p style="text-align:center;color:var(--grey);">Order not found. <a href="index.html" class="gold-text">Return home</a>.</p>`;
-}else{
+  const params = new URLSearchParams(window.location.search);
+  const orderId = params.get('order');
+  const target = document.getElementById('receiptContent');
+
+  if(!orderId){
+    target.innerHTML = `<p style="text-align:center;color:var(--grey);">Order not found. <a href="index.html" class="gold-text">Return home</a>.</p>`;
+    return;
+  }
+
+  const order = await OrderStore.getById(orderId);
+  if(!order){
+    target.innerHTML = `<p style="text-align:center;color:var(--grey);">Order not found. <a href="index.html" class="gold-text">Return home</a>.</p>`;
+    return;
+  }
+
   const dateObj = new Date(order.date);
   target.innerHTML = `
     <div class="receipt-head">
@@ -92,6 +103,7 @@ if(!order){
     <p class="receipt-thanks">Thank you for shopping with Zionova — Wear the Statement.</p>
   `;
 }
+init();
 </script>
 </body>
 </html>
