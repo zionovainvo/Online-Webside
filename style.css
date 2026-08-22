@@ -141,7 +141,25 @@ input, select, textarea{ font-family:inherit; }
   font-weight:700;
   letter-spacing:2px;
 }
+
+/*----logo Image-----*/
+.logo-img{
+  max-height:38px;
+  width:auto;
+  display:block;
+}
+
+.admin-logo .logo-img{
+  max-height:28px;
+}
+
+.login-card .logo-img{
+  max-height:44px;
+  margin:0 auto;
+}
+
 .brand-logo span{ color:var(--gold); }
+
 .nav-links{
   display:flex; gap:36px; align-items:center;
 }

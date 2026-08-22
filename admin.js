@@ -52,7 +52,20 @@ function showLogin(){
 
 function initAuth(){
   if(!checkFirebaseConfigured()) return;
-  AdminAuth.onChange(user => { if(user) showApp(user); else showLogin(); });
+
+  AdminAuth.onChange(async user => {
+    if(user){
+      try{
+        applySiteSettings(await SettingsStore.get());
+      }catch(e){
+        console.error('Could not load site settings:', e);
+      }
+
+      showApp(user);
+    }else{
+      showLogin();
+    }
+  });
 }
 
 document.getElementById('loginForm').addEventListener('submit', async function(e){
@@ -120,13 +133,14 @@ function initDashboard(){
   });
 
   unsubSettings = SettingsStore.listen(settings => {
-    currentSettings = settings;
-    // keep design/settings forms in sync if the user is looking at them
-    if(document.getElementById('tab-design').classList.contains('active')) loadDesignForm();
-    if(document.getElementById('tab-settings').classList.contains('active')) loadSettingsForm();
-  });
+  currentSettings = settings;
 
-  buildFontOptions();
+  applySiteSettings(settings);
+
+  // keep design/settings forms in sync if the user is looking at them
+  if(document.getElementById('tab-design').classList.contains('active')) loadDesignForm();
+  if(document.getElementById('tab-settings').classList.contains('active')) loadSettingsForm();
+  });
 }
 
 let currentSettings = {};

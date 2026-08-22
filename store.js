@@ -18,6 +18,7 @@ const CART_KEY = 'zionova_cart';
 /* ---------------- Defaults (used only if Firestore doc is empty) ---------------- */
 const DEFAULT_SETTINGS = {
   // Brand content
+  logoImageUrl: ' ',
   name: 'Zionova',
   tagline: 'Wear the Statement',
   description: "Zionova is a premium streetwear label built for those who lead, not follow. Every piece is designed in small batches, blending minimalist tailoring with bold gold accents — crafted for people who value quality over quantity.",
@@ -28,12 +29,20 @@ const DEFAULT_SETTINGS = {
   whatsapp: 'https://wa.me/94000000000',
   email: 'hello@zionova.com',
   // Design / theme (applied live across the storefront)
-  colorBg: '#ffffff',
-  colorText: '#0d0d0d',
-  colorGold: '#c9a227',
-  fontPair: 'playfair-poppins', // playfair-poppins | cormorant-inter | bodoni-manrope
-  heroImageUrl: '',
-  aboutImageUrl: '',
+  heroEyebrow: 'Premium Streetwear Label',
+  heroCtaPrimary: 'Shop Collection', heroCtaSecondary: 'Our Story',
+  heroVisualCaption: 'The Gold Standard Collection — 2026',
+  aboutLabel: 'The Brand', aboutHeading: 'About Zionova',
+  stat1Value: '4.5★', stat1Label: 'Customer Rating',
+  stat2Value: '1K+', stat2Label: 'Happy Customers',
+  stat3Value: '100%', stat3Label: 'Premium Cotton',
+  productsLabel: 'Latest Drop', productsTitle: 'Shop T-Shirts',
+  productsSubtitle: 'Premium cotton tees...',
+  socialsLabel: 'Stay Connected', socialsTitle: 'Follow Zionova',
+  socialsSubtitle: 'Join the community...',
+  footerCopyright: 'Zionova. All rights reserved.',
+  colorBg: '#ffffff', colorText: '#0d0d0d', colorGold: '#c9a227',
+  fontPair: 'playfair-poppins', heroImageUrl: '', aboutImageUrl: '',
   // Integrations
   sheetWebhookUrl: '',
   shippingFee: 350
@@ -268,10 +277,67 @@ function applySiteSettings(settings){
   if(fontLink.href !== pair.href) fontLink.href = pair.href;
 
   const setText = (id, val) => { const el = document.getElementById(id); if(el && val) el.textContent = val; };
+  // ==========================================
+  // LOGO
+  // ==========================================
+  document.querySelectorAll('.js-logo').forEach(el => {
+    if(settings.logoImageUrl){
+      el.innerHTML = `
+        <img 
+          src="${escapeHTML(settings.logoImageUrl)}" 
+          alt="${escapeHTML(settings.siteName || 'Zionova')}" 
+          class="logo-img"
+        >
+      `;
+    }else{
+      el.textContent = settings.siteName || 'Zionova';
+    }
+  });
+  // ==========================================
+  // HERO SECTION
+  // ==========================================
+  setText('heroEyebrow', settings.heroEyebrow);
   setText('heroDesc', settings.description);
+  setText('heroCtaPrimary', settings.heroCtaPrimary);
+  setText('heroCtaSecondary', settings.heroCtaSecondary);
+  setText('heroVisualCaption', settings.heroVisualCaption);
+  // ==========================================
+  // ABOUT SECTION
+  // ==========================================
+  setText('aboutLabel', settings.aboutLabel);
+  setText('aboutHeading', settings.aboutHeading);
   setText('aboutDesc', settings.description);
   setText('aboutText2', settings.aboutText);
+  // ==========================================
+  // STATISTICS
+  // ==========================================
+  setText('stat1Value', settings.stat1Value);
+  setText('stat1Label', settings.stat1Label);
+
+  setText('stat2Value', settings.stat2Value);
+  setText('stat2Label', settings.stat2Label);
+
+  setText('stat3Value', settings.stat3Value);
+  setText('stat3Label', settings.stat3Label);
+  // ==========================================
+  // PRODUCTS SECTION
+  // ==========================================
+  setText('productsLabel', settings.productsLabel);
+  setText('productsTitle', settings.productsTitle);
+  setText('productsSubtitle', settings.productsSubtitle);
+  // ==========================================
+  // SOCIAL SECTION
+  // ==========================================
+  setText('socialsLabel', settings.socialsLabel);
+  setText('socialsTitle', settings.socialsTitle);
+  setText('socialsSubtitle', settings.socialsSubtitle);
+
+
+  // ==========================================
+  // FOOTER
+  // ==========================================
   setText('footerTagline', settings.description);
+  setText('footerCopyrightText', settings.footerCopyright);
 
   const heroVisual = document.getElementById('heroVisual');
   if(heroVisual && settings.heroImageUrl){

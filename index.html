@@ -13,7 +13,7 @@
 <!-- ================= NAVBAR ================= -->
 <header class="navbar">
   <div class="nav-inner">
-    <a href="index.html" class="brand-logo">ZIO<span>NOVA</span></a>
+    <a href="index.html" class="brand-logo js-logo">ZIONOVA</a>
     <nav class="nav-links">
       <a href="#home">Home</a>
       <a href="#about">Our Story</a>
@@ -30,7 +30,7 @@
 <section class="hero" id="home">
   <div class="hero-inner">
     <div>
-      <span class="hero-eyebrow">Premium Streetwear Label</span>
+      <span class="hero-eyebrow" id="heroEyebrow">Premium Streetwear Label</span>
       <h1 id="heroTitle">Wear the <em>Statement</em>.</h1>
       <p id="heroDesc">Zionova is a premium streetwear label built for those who lead, not follow.</p>
       <div class="hero-cta">
@@ -39,7 +39,7 @@
       </div>
     </div>
     <div class="hero-visual" id="heroVisual">
-      <div class="hero-visual-caption">The Gold Standard Collection — 2026</div>
+      <div class="hero-visual-caption" id="heroCaption">The Gold Standard Collection — 2026</div>
     </div>
   </div>
 </section>
@@ -49,14 +49,25 @@
   <div class="container about-grid">
     <div class="about-visual" id="aboutVisual">Est. 2026</div>
     <div class="about-text">
-      <span class="section-label">The Brand</span>
-      <h2>About Zionova</h2>
+      <span class="section-label" id="aboutLabel">The Brand</span>
+      <h2 id="aboutTitle">About Zionova</h2>
       <p id="aboutDesc">Zionova is a premium streetwear label built for those who lead, not follow.</p>
       <p id="aboutText2">From the cut of the collar to the weight of the cotton, every detail is considered.</p>
       <div class="stat-row">
-        <div class="stat"><b>4.9★</b><span>Customer Rating</span></div>
-        <div class="stat"><b>2K+</b><span>Happy Customers</span></div>
-        <div class="stat"><b>100%</b><span>Premium Cotton</span></div>
+        <div class="stat">
+          <b id="statRating">4.9★</b>
+          <span id="statRatingLabel">Customer Rating</span>
+        </div>
+
+        <div class="stat">
+          <b id="statCustomers">2K+</b>
+          <span id="statCustomersLabel">Happy Customers</span>
+        </div>
+
+        <div class="stat">
+          <b id="statCotton">100%</b>
+          <span id="statCottonLabel">Premium Cotton</span>
+        </div>
       </div>
     </div>
   </div>
@@ -65,9 +76,9 @@
 <!-- ================= PRODUCTS ================= -->
 <section class="products" id="shop">
   <div class="container">
-    <span class="section-label">Latest Drop</span>
-    <h2 class="section-title">Shop T-Shirts</h2>
-    <p class="section-sub">Premium cotton tees, designed and finished with signature Zionova gold detailing.</p>
+    <span class="section-label" id="productsLabel">Latest Drop</span>
+      <h2 class="section-title" id="productsTitle">Shop T-Shirts</h2>
+      <p class="section-sub" id="productsSubtitle">Premium cotton tees, designed and finished with signature Zionova gold detailing.</p>
     <div class="product-grid" id="productGrid">
       <div class="empty-note">Loading products…</div>
     </div>
@@ -76,9 +87,9 @@
 
 <!-- ================= SOCIALS ================= -->
 <section class="socials" id="connect">
-  <span class="section-label">Stay Connected</span>
-  <h2 class="section-title">Follow Zionova</h2>
-  <p class="section-sub">Join the community — new drops, behind the scenes, and exclusive offers.</p>
+  <span class="section-label" id="socialsLabel">Stay Connected</span>
+  <h2 class="section-title" id="socialsTitle">Follow Zionova</h2>
+  <p class="section-sub" id="socialsSubtitle">Join the community — new drops, behind the scenes, and exclusive offers.</p>
   <div class="social-grid" id="socialGrid"></div>
 </section>
 
@@ -86,7 +97,7 @@
 <footer class="site-footer">
   <div class="container footer-grid">
     <div>
-      <h4>ZIO<span class="gold-text">NOVA</span></h4>
+      <h4 class="js-logo">ZIONOVA</h4>
       <p id="footerTagline">Premium streetwear crafted for those who lead.</p>
     </div>
     <div>
@@ -103,7 +114,9 @@
     </div>
   </div>
   <div class="container footer-bottom">
-    <span>&copy; <span id="year"></span> Zionova. All rights reserved.</span>
+    <span id="footerCopyrightText">
+      &copy; <span id="year"></span> Zionova. All rights reserved.
+    </span>
     <a href="admin.html" style="opacity:.5;">Staff Login</a>
   </div>
 </footer>
