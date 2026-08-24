@@ -18,7 +18,7 @@ const CART_KEY = 'zionova_cart';
 /* ---------------- Defaults (used only if Firestore doc is empty) ---------------- */
 const DEFAULT_SETTINGS = {
   // Brand content
-  logoImageUrl: ' ',
+  logoImageUrl:'https://drive.google.com/file/d/1R8mjVPUaWiDfxsUC7EZzYjOkBnZpkc2u/view?usp=drive_link',
   name: 'Zionova',
   tagline: 'Wear the Statement',
   description: "Zionova is a premium streetwear label built for those who lead, not follow. Every piece is designed in small batches, blending minimalist tailoring with bold gold accents — crafted for people who value quality over quantity.",
