@@ -29,6 +29,7 @@ const DEFAULT_SETTINGS = {
   whatsapp: 'https://wa.me/94000000000',
   email: 'hello@zionova.com',
   // Design / theme (applied live across the storefront)
+  heroTitle: 'Wear the <em>Statement</em>.',
   heroEyebrow: 'Premium Streetwear Label',
   heroCtaPrimary: 'Shop Collection', heroCtaSecondary: 'Our Story',
   heroVisualCaption: 'The Gold Standard Collection — 2026',
@@ -43,6 +44,12 @@ const DEFAULT_SETTINGS = {
   footerCopyright: 'Zionova. All rights reserved.',
   colorBg: '#ffffff', colorText: '#0d0d0d', colorGold: '#c9a227',
   fontPair: 'playfair-poppins', heroImageUrl: '', aboutImageUrl: '',
+  // Payments
+  bankDetails: 'Bank: Sample Bank\nAccount Name: Zionova\nAccount Number: 0000 0000 0000\nBranch: Colombo\nSWIFT: SAMPLKLX',
+  // Receipt customization (used for every order — POS + online)
+  receiptThanksMessage: 'Thank you for shopping with Zionova — Wear the Statement.',
+  receiptFooterNote: '',
+  receiptShowLogo: true,
   // Integrations
   sheetWebhookUrl: '',
   shippingFee: 350
@@ -107,6 +114,13 @@ const ProductStore = {
   finalPrice(p){
     const discount = Number(p.discount) || 0;
     return Math.round(p.price * (1 - discount / 100));
+  },
+  /* Returns a clean array of image URLs for a product, whether it was
+     saved with the new "images" array or the old single "image" field. */
+  getImages(p){
+    if(Array.isArray(p.images) && p.images.length) return p.images.filter(Boolean);
+    if(p.image) return [p.image];
+    return [];
   }
 };
 
@@ -296,6 +310,8 @@ function applySiteSettings(settings){
   // ==========================================
   // HERO SECTION
   // ==========================================
+  const heroTitleEl = document.getElementById('heroTitle');
+  if(heroTitleEl && settings.heroTitle) heroTitleEl.innerHTML = settings.heroTitle;
   setText('heroEyebrow', settings.heroEyebrow);
   setText('heroDesc', settings.description);
   setText('heroCtaPrimary', settings.heroCtaPrimary);

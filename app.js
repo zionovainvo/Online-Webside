@@ -36,12 +36,14 @@ function renderProducts(){
   grid.innerHTML = liveProducts.map(p => {
     const finalPrice = ProductStore.finalPrice(p);
     const outOfStock = Number(p.stock) <= 0;
+    const images = ProductStore.getImages(p);
     return `
     <div class="product-card">
       ${p.discount > 0 ? `<div class="badge-discount">-${p.discount}%</div>` : ''}
       ${outOfStock ? `<div class="badge-stock">Sold Out</div>` : ''}
-      <div class="product-thumb">
-        ${p.image ? `<img src="${escapeHTML(p.image)}" alt="${escapeHTML(p.name)}">` : escapeHTML(p.name)}
+      <div class="product-thumb" ${images.length ? `onclick="openGallery('${p.id}')" style="cursor:pointer;"` : ''}>
+        ${images.length ? `<img src="${escapeHTML(images[0])}" alt="${escapeHTML(p.name)}">` : escapeHTML(p.name)}
+        ${images.length > 1 ? `<span class="thumb-gallery-hint">${icon('image')} ${images.length}</span>` : ''}
       </div>
       <div class="product-info">
         <h3>${escapeHTML(p.name)}</h3>
@@ -134,5 +136,63 @@ function showToast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
 }
+
+/* ---------- Product image gallery (swipeable lightbox) ---------- */
+let galleryImages = [];
+let galleryIndex = 0;
+
+function openGallery(productId){
+  const p = liveProducts.find(x => x.id === productId);
+  if(!p) return;
+  galleryImages = ProductStore.getImages(p);
+  if(!galleryImages.length) return;
+  galleryIndex = 0;
+  renderGallery();
+  document.getElementById('galleryOverlay').classList.add('active');
+}
+function closeGallery(){
+  document.getElementById('galleryOverlay').classList.remove('active');
+}
+function renderGallery(){
+  document.getElementById('galleryImage').src = galleryImages[galleryIndex];
+  const dots = document.getElementById('galleryDots');
+  dots.innerHTML = galleryImages.length > 1 ? galleryImages.map((_, i) => `
+    <span class="gallery-dot ${i === galleryIndex ? 'active' : ''}" onclick="goToGalleryImage(${i})"></span>
+  `).join('') : '';
+  const prevBtn = document.getElementById('galleryPrev');
+  const nextBtn = document.getElementById('galleryNext');
+  const multi = galleryImages.length > 1;
+  prevBtn.style.display = multi ? 'flex' : 'none';
+  nextBtn.style.display = multi ? 'flex' : 'none';
+}
+function goToGalleryImage(i){ galleryIndex = i; renderGallery(); }
+function nextGalleryImage(){ galleryIndex = (galleryIndex + 1) % galleryImages.length; renderGallery(); }
+function prevGalleryImage(){ galleryIndex = (galleryIndex - 1 + galleryImages.length) % galleryImages.length; renderGallery(); }
+
+document.getElementById('galleryClose').addEventListener('click', closeGallery);
+document.getElementById('galleryOverlay').addEventListener('click', e => { if(e.target.id === 'galleryOverlay') closeGallery(); });
+document.getElementById('galleryNext').addEventListener('click', nextGalleryImage);
+document.getElementById('galleryPrev').addEventListener('click', prevGalleryImage);
+
+// Touch swipe support
+(function(){
+  const viewport = document.getElementById('galleryViewport');
+  let startX = 0, deltaX = 0;
+  viewport.addEventListener('touchstart', e => { startX = e.touches[0].clientX; deltaX = 0; }, { passive: true });
+  viewport.addEventListener('touchmove', e => { deltaX = e.touches[0].clientX - startX; }, { passive: true });
+  viewport.addEventListener('touchend', () => {
+    if(Math.abs(deltaX) > 40){
+      if(deltaX < 0) nextGalleryImage(); else prevGalleryImage();
+    }
+  });
+})();
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if(!document.getElementById('galleryOverlay').classList.contains('active')) return;
+  if(e.key === 'ArrowRight') nextGalleryImage();
+  if(e.key === 'ArrowLeft') prevGalleryImage();
+  if(e.key === 'Escape') closeGallery();
+});
 
 init();

@@ -34,8 +34,8 @@
       <h1 id="heroTitle">Wear the <em>Statement</em>.</h1>
       <p id="heroDesc">Zionova is a premium streetwear label built for those who lead, not follow.</p>
       <div class="hero-cta">
-        <a href="#shop" class="btn btn-gold">Shop Collection</a>
-        <a href="#about" class="btn btn-outline">Our Story</a>
+        <a href="#shop" class="btn btn-gold" id="heroCtaPrimary">Shop Collection</a>
+        <a href="#about" class="btn btn-outline" id="heroCtaSecondary">Our Story</a>
       </div>
     </div>
     <div class="hero-visual" id="heroVisual">
@@ -136,6 +136,17 @@
 </aside>
 
 <div class="toast" id="toast"></div>
+
+<!-- ================= PRODUCT IMAGE GALLERY (swipeable) ================= -->
+<div class="gallery-overlay" id="galleryOverlay">
+  <button class="gallery-close" id="galleryClose"></button>
+  <button class="gallery-nav gallery-prev" id="galleryPrev">&#10094;</button>
+  <div class="gallery-viewport" id="galleryViewport">
+    <img class="gallery-image" id="galleryImage" src="" alt="Product photo">
+  </div>
+  <button class="gallery-nav gallery-next" id="galleryNext">&#10095;</button>
+  <div class="gallery-dots" id="galleryDots"></div>
+</div>
 
 <!-- Firebase SDKs -->
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>

@@ -190,9 +190,10 @@ function renderProductsTable(){
   tbody.innerHTML = liveProducts.length ? liveProducts.map(p => {
     const final = ProductStore.finalPrice(p);
     const inStock = Number(p.stock) > 0;
+    const images = ProductStore.getImages(p);
     return `
     <tr>
-      <td><div class="thumb-sm">${p.image ? `<img src="${escapeHTML(p.image)}" style="width:100%;height:100%;object-fit:cover;">` : escapeHTML(p.name.slice(0,2))}</div></td>
+      <td><div class="thumb-sm">${images.length ? `<img src="${escapeHTML(images[0])}" style="width:100%;height:100%;object-fit:cover;">` : escapeHTML(p.name.slice(0,2))}</div></td>
       <td>${escapeHTML(p.name)}</td>
       <td>${formatMoney(p.price)}</td>
       <td>${p.discount || 0}%</td>
@@ -230,7 +231,7 @@ function openProductModal(id){
     document.getElementById('prodDiscount').value = p.discount || 0;
     document.getElementById('prodStock').value = p.stock;
     document.getElementById('prodDesc').value = p.description || '';
-    document.getElementById('prodImage').value = p.image || '';
+    document.getElementById('prodImages').value = ProductStore.getImages(p).join('\n');
   }else{
     document.getElementById('productModalTitle').textContent = 'Add Product';
     document.getElementById('prodId').value = '';
@@ -241,13 +242,16 @@ function openProductModal(id){
 document.getElementById('productForm').addEventListener('submit', async function(e){
   e.preventDefault();
   const id = document.getElementById('prodId').value;
+  const images = document.getElementById('prodImages').value
+    .split('\n').map(s => s.trim()).filter(Boolean);
   const data = {
     name: document.getElementById('prodName').value.trim(),
     price: parseFloat(document.getElementById('prodPrice').value) || 0,
     discount: parseFloat(document.getElementById('prodDiscount').value) || 0,
     stock: parseInt(document.getElementById('prodStock').value, 10) || 0,
     description: document.getElementById('prodDesc').value.trim(),
-    image: document.getElementById('prodImage').value.trim()
+    images: images,
+    image: images[0] || '' // kept for backward compatibility
   };
   try{
     if(id){ await ProductStore.update(id, data); showToast('Product updated'); }
@@ -272,9 +276,10 @@ function renderPOS(){
   grid.innerHTML = products.length ? products.map(p => {
     const final = ProductStore.finalPrice(p);
     const outOfStock = Number(p.stock) <= 0;
+    const images = ProductStore.getImages(p);
     return `
     <div class="pos-card" style="${outOfStock ? 'opacity:.4;pointer-events:none;' : ''}" onclick="posAddItem('${p.id}')">
-      <div class="thumb">${p.image ? `<img src="${escapeHTML(p.image)}" style="width:100%;height:100%;object-fit:cover;">` : escapeHTML(p.name)}</div>
+      <div class="thumb">${images.length ? `<img src="${escapeHTML(images[0])}" style="width:100%;height:100%;object-fit:cover;">` : escapeHTML(p.name)}</div>
       <h4>${escapeHTML(p.name)}</h4>
       <div class="price">${formatMoney(final)}</div>
     </div>`;
@@ -450,11 +455,39 @@ function buildFontOptions(){
 
 function loadDesignForm(){
   const s = currentSettings;
-  document.getElementById('d_tagline').value = s.tagline || '';
+  // Hero
+  document.getElementById('d_heroEyebrow').value = s.heroEyebrow || '';
+  document.getElementById('d_heroTitle').value = s.heroTitle || '';
   document.getElementById('d_description').value = s.description || '';
+  document.getElementById('d_heroCtaPrimary').value = s.heroCtaPrimary || '';
+  document.getElementById('d_heroCtaSecondary').value = s.heroCtaSecondary || '';
+  document.getElementById('d_heroVisualCaption').value = s.heroVisualCaption || '';
+  // About
+  document.getElementById('d_aboutLabel').value = s.aboutLabel || '';
+  document.getElementById('d_aboutHeading').value = s.aboutHeading || '';
   document.getElementById('d_aboutText').value = s.aboutText || '';
+  document.getElementById('d_stat1Value').value = s.stat1Value || '';
+  document.getElementById('d_stat1Label').value = s.stat1Label || '';
+  document.getElementById('d_stat2Value').value = s.stat2Value || '';
+  document.getElementById('d_stat2Label').value = s.stat2Label || '';
+  document.getElementById('d_stat3Value').value = s.stat3Value || '';
+  document.getElementById('d_stat3Label').value = s.stat3Label || '';
+  // Sections
+  document.getElementById('d_productsLabel').value = s.productsLabel || '';
+  document.getElementById('d_productsTitle').value = s.productsTitle || '';
+  document.getElementById('d_productsSubtitle').value = s.productsSubtitle || '';
+  document.getElementById('d_socialsLabel').value = s.socialsLabel || '';
+  document.getElementById('d_socialsTitle').value = s.socialsTitle || '';
+  document.getElementById('d_socialsSubtitle').value = s.socialsSubtitle || '';
+  document.getElementById('d_footerCopyright').value = s.footerCopyright || '';
+  // Images
+  document.getElementById('d_logoImage').value = s.logoImageUrl || '';
   document.getElementById('d_heroImage').value = s.heroImageUrl || '';
   document.getElementById('d_aboutImage').value = s.aboutImageUrl || '';
+  // Receipt
+  document.getElementById('d_receiptShowLogo').checked = !!s.receiptShowLogo;
+  document.getElementById('d_receiptThanks').value = s.receiptThanksMessage || '';
+  document.getElementById('d_receiptFooterNote').value = s.receiptFooterNote || '';
 
   document.getElementById('d_colorBg').value = s.colorBg || '#ffffff';
   document.getElementById('d_colorBgText').value = s.colorBg || '#ffffff';
@@ -476,23 +509,67 @@ function loadDesignForm(){
   textEl.addEventListener('input', () => { if(/^#[0-9a-fA-F]{6}$/.test(textEl.value)) colorEl.value = textEl.value; });
 });
 
-document.getElementById('contentForm').addEventListener('submit', async e => {
+document.getElementById('heroForm').addEventListener('submit', async e => {
   e.preventDefault();
   await SettingsStore.save({
-    tagline: document.getElementById('d_tagline').value.trim(),
+    heroEyebrow: document.getElementById('d_heroEyebrow').value.trim(),
+    heroTitle: document.getElementById('d_heroTitle').value.trim(),
     description: document.getElementById('d_description').value.trim(),
-    aboutText: document.getElementById('d_aboutText').value.trim()
+    heroCtaPrimary: document.getElementById('d_heroCtaPrimary').value.trim(),
+    heroCtaSecondary: document.getElementById('d_heroCtaSecondary').value.trim(),
+    heroVisualCaption: document.getElementById('d_heroVisualCaption').value.trim()
   });
-  showToast('Content saved — live on your site now');
+  showToast('Hero section saved — live on your site now');
+});
+
+document.getElementById('aboutForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  await SettingsStore.save({
+    aboutLabel: document.getElementById('d_aboutLabel').value.trim(),
+    aboutHeading: document.getElementById('d_aboutHeading').value.trim(),
+    aboutText: document.getElementById('d_aboutText').value.trim(),
+    stat1Value: document.getElementById('d_stat1Value').value.trim(),
+    stat1Label: document.getElementById('d_stat1Label').value.trim(),
+    stat2Value: document.getElementById('d_stat2Value').value.trim(),
+    stat2Label: document.getElementById('d_stat2Label').value.trim(),
+    stat3Value: document.getElementById('d_stat3Value').value.trim(),
+    stat3Label: document.getElementById('d_stat3Label').value.trim()
+  });
+  showToast('About section saved — live on your site now');
+});
+
+document.getElementById('sectionsForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  await SettingsStore.save({
+    productsLabel: document.getElementById('d_productsLabel').value.trim(),
+    productsTitle: document.getElementById('d_productsTitle').value.trim(),
+    productsSubtitle: document.getElementById('d_productsSubtitle').value.trim(),
+    socialsLabel: document.getElementById('d_socialsLabel').value.trim(),
+    socialsTitle: document.getElementById('d_socialsTitle').value.trim(),
+    socialsSubtitle: document.getElementById('d_socialsSubtitle').value.trim(),
+    footerCopyright: document.getElementById('d_footerCopyright').value.trim()
+  });
+  showToast('Section text saved — live on your site now');
 });
 
 document.getElementById('imagesForm').addEventListener('submit', async e => {
   e.preventDefault();
   await SettingsStore.save({
+    logoImageUrl: document.getElementById('d_logoImage').value.trim(),
     heroImageUrl: document.getElementById('d_heroImage').value.trim(),
     aboutImageUrl: document.getElementById('d_aboutImage').value.trim()
   });
   showToast('Images saved — live on your site now');
+});
+
+document.getElementById('receiptForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  await SettingsStore.save({
+    receiptShowLogo: document.getElementById('d_receiptShowLogo').checked,
+    receiptThanksMessage: document.getElementById('d_receiptThanks').value.trim(),
+    receiptFooterNote: document.getElementById('d_receiptFooterNote').value.trim()
+  });
+  showToast('Receipt design saved — used on every order from now on');
 });
 
 document.getElementById('saveColorsBtn').addEventListener('click', async () => {
@@ -522,6 +599,7 @@ function loadSettingsForm(){
   document.getElementById('setWhatsapp').value = s.whatsapp || '';
   document.getElementById('setEmail').value = s.email || '';
   document.getElementById('setShipping').value = s.shippingFee ?? 350;
+  document.getElementById('setBankDetails').value = s.bankDetails || '';
 
   document.getElementById('sheetWebhookUrl').value = s.sheetWebhookUrl || '';
   const connected = !!s.sheetWebhookUrl;
@@ -540,6 +618,14 @@ document.getElementById('brandForm').addEventListener('submit', async function(e
     shippingFee: parseFloat(document.getElementById('setShipping').value) || 0
   });
   showToast('Settings saved — live on your site now');
+});
+
+document.getElementById('bankForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  await SettingsStore.save({
+    bankDetails: document.getElementById('setBankDetails').value.trim()
+  });
+  showToast('Bank details saved — shown at checkout');
 });
 
 document.getElementById('saveSheetBtn').addEventListener('click', async () => {

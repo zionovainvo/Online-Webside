@@ -611,6 +611,60 @@ body{ padding-top:0; }
 .status-dot.on{ background:var(--success); }
 .status-dot.off{ background:var(--danger); }
 
+/* ---------- Product image gallery hint ---------- */
+.thumb-gallery-hint{
+  position:absolute; bottom:10px; right:10px;
+  background:rgba(0,0,0,.6); color:#fff; font-size:11px;
+  padding:4px 8px; border-radius:20px; display:flex; align-items:center; gap:4px;
+}
+.thumb-gallery-hint .icon{ width:12px; height:12px; }
+.product-thumb{ position:relative; }
+
+/* ---------- Product image gallery (swipeable lightbox) ---------- */
+.gallery-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:2500;
+  display:none; align-items:center; justify-content:center;
+}
+.gallery-overlay.active{ display:flex; }
+.gallery-viewport{
+  width:min(600px, 86vw); aspect-ratio:1/1; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  touch-action:pan-y;
+}
+.gallery-image{ max-width:100%; max-height:100%; object-fit:contain; user-select:none; }
+.gallery-close{
+  position:absolute; top:22px; right:26px; color:#fff; font-size:30px; line-height:1;
+}
+.gallery-nav{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.12);
+  color:#fff; font-size:16px; display:flex; align-items:center; justify-content:center;
+  transition:.2s;
+}
+.gallery-nav:hover{ background:var(--gold); color:var(--black); }
+.gallery-prev{ left:20px; }
+.gallery-next{ right:20px; }
+.gallery-dots{
+  position:absolute; bottom:26px; left:0; right:0;
+  display:flex; justify-content:center; gap:8px;
+}
+.gallery-dot{
+  width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.35); cursor:pointer;
+}
+.gallery-dot.active{ background:var(--gold); }
+
+/* ---------- Card payment apology / bank details ---------- */
+.apology-box{
+  border:1px solid var(--light-grey); background:#fbf6e8; padding:18px;
+  margin-top:6px; margin-bottom:16px;
+}
+.apology-box p{ font-size:13px; color:var(--grey); margin-bottom:12px; }
+.bank-details-box{
+  border:1px solid var(--light-grey); background:var(--off-white); padding:18px;
+  margin-top:6px; margin-bottom:16px; font-size:13px; white-space:pre-line;
+}
+.bank-details-box h4{ font-family:var(--serif); font-size:14px; margin-bottom:10px; }
+
 /* ---------- Print ---------- */
 @media print{
   .no-print{ display:none !important; }

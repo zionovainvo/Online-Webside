@@ -1,5 +1,28 @@
 # Zionova Website — Setup Guide
 
+## ⭐ What's new
+
+1. **Full website editor** — `admin.html` → **Website Editor** now lets you edit
+   every piece of text on the homepage (hero headline, eyebrow text, buttons,
+   about section, stats, section labels, footer) plus your logo, hero image,
+   about image, colours, and font — all saved to Firebase and live on every
+   device within a second or two.
+2. **Receipt design** — a new **Receipt Design** card (same tab) lets you set
+   the thank-you message, an optional footer note, and whether your logo
+   appears on receipts. This one format is used for every receipt — online
+   orders and in-store POS sales alike.
+3. **Card payment apology + bank transfer** — customers who pick "Card
+   Payment" at checkout now see an apology message and a "Switch to Bank
+   Transfer" button instead of card fields. Set your bank details once in
+   `admin.html` → **Settings → Bank Transfer Details** and they'll show up
+   automatically whenever a customer picks Bank Transfer.
+4. **Multiple product photos** — in **Products → Add/Edit Product**, paste
+   one image URL per line to attach several photos to a product. On the
+   storefront, customers can click any product photo to open a full-screen
+   gallery and swipe (or use the arrows/keyboard) through all of them.
+
+---
+
 Your site now runs on **Firebase** (a free Google cloud database), so every
 change — products, orders, admin login, even your site's colours and text —
 is stored in one shared place. That fixes both problems you had before:

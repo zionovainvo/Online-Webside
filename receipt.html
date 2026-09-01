@@ -66,7 +66,9 @@ async function init(){
   const dateObj = new Date(order.date);
   target.innerHTML = `
     <div class="receipt-head">
-      <h2>ZIO<span class="gold-text">NOVA</span></h2>
+      ${settings.receiptShowLogo && settings.logoImageUrl
+        ? `<img src="${escapeHTML(settings.logoImageUrl)}" alt="${escapeHTML(settings.name || 'Zionova')}" style="max-height:44px;margin:0 auto 8px;">`
+        : `<h2>ZIO<span class="gold-text">NOVA</span></h2>`}
       <span>Official Order Receipt</span>
     </div>
     <div class="receipt-meta">
@@ -100,7 +102,8 @@ async function init(){
       <div class="summary-row"><span>Delivery</span><span>${formatMoney(order.shipping)}</span></div>
       <div class="summary-row total"><span>Total</span><span>${formatMoney(order.total)}</span></div>
     </div>
-    <p class="receipt-thanks">Thank you for shopping with Zionova — Wear the Statement.</p>
+    <p class="receipt-thanks">${escapeHTML(settings.receiptThanksMessage || 'Thank you for shopping with us.')}</p>
+    ${settings.receiptFooterNote ? `<p class="receipt-thanks" style="font-size:11px;font-style:normal;color:var(--grey);margin-top:8px;">${escapeHTML(settings.receiptFooterNote)}</p>` : ''}
   `;
 }
 init();

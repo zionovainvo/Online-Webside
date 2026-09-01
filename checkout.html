@@ -65,16 +65,14 @@
           <div class="pay-method" data-method="Bank Transfer">Bank Transfer</div>
         </div>
 
-        <div id="cardFields" style="display:none;">
-          <div class="form-group">
-            <label>Card Number</label>
-            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Expiry</label><input type="text" id="cardExpiry" placeholder="MM/YY" maxlength="5"></div>
-            <div class="form-group"><label>CVV</label><input type="text" id="cardCvv" placeholder="123" maxlength="4"></div>
-          </div>
-          <p style="font-size:11px;color:var(--grey);">This is a demo store — no real payment is processed.</p>
+        <div id="cardApologyBox" class="apology-box" style="display:none;">
+          <p><strong>We're sorry</strong> — card payments aren't available on our store just yet. Please use Bank Transfer instead, and we'll get your order moving right away.</p>
+          <button type="button" class="btn btn-dark btn-sm" id="switchToBankBtn">Switch to Bank Transfer</button>
+        </div>
+
+        <div id="bankDetailsBox" class="bank-details-box" style="display:none;">
+          <h4>Bank Transfer Details</h4>
+          <div id="bankDetailsText"></div>
         </div>
 
         <button type="submit" class="btn btn-gold btn-block" id="placeOrderBtn" style="margin-top:20px;">Place Order &amp; Pay</button>

@@ -169,12 +169,60 @@
       <div class="admin-topbar"><h1>Website Editor</h1></div>
 
       <div class="card">
-        <h3>Text Content</h3>
-        <form id="contentForm">
-          <div class="form-group"><label>Brand Tagline</label><input type="text" id="d_tagline" placeholder="Wear the Statement"></div>
-          <div class="form-group"><label>Hero / Brand Description</label><textarea id="d_description" rows="3"></textarea></div>
-          <div class="form-group"><label>About Section — Second Paragraph</label><textarea id="d_aboutText" rows="3"></textarea></div>
-          <button type="submit" class="btn btn-dark">Save Content</button>
+        <h3>Hero Section</h3>
+        <form id="heroForm">
+          <div class="form-group"><label>Eyebrow Text (small line above headline)</label><input type="text" id="d_heroEyebrow" placeholder="Premium Streetwear Label"></div>
+          <div class="form-group"><label>Headline (HTML allowed, e.g. use &lt;em&gt;word&lt;/em&gt; for gold italics)</label><input type="text" id="d_heroTitle" placeholder="Wear the <em>Statement</em>."></div>
+          <div class="form-group"><label>Brand Tagline / Description</label><textarea id="d_description" rows="3"></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label>Primary Button Text</label><input type="text" id="d_heroCtaPrimary" placeholder="Shop Collection"></div>
+            <div class="form-group"><label>Secondary Button Text</label><input type="text" id="d_heroCtaSecondary" placeholder="Our Story"></div>
+          </div>
+          <div class="form-group"><label>Hero Visual Caption</label><input type="text" id="d_heroVisualCaption" placeholder="The Gold Standard Collection — 2026"></div>
+          <button type="submit" class="btn btn-dark">Save Hero Section</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>About Section</h3>
+        <form id="aboutForm">
+          <div class="form-row">
+            <div class="form-group"><label>Section Label</label><input type="text" id="d_aboutLabel" placeholder="The Brand"></div>
+            <div class="form-group"><label>Heading</label><input type="text" id="d_aboutHeading" placeholder="About Zionova"></div>
+          </div>
+          <div class="form-group"><label>Second Paragraph</label><textarea id="d_aboutText" rows="3"></textarea></div>
+          <h4 style="font-size:13px;margin:16px 0 10px;">Stats Row</h4>
+          <div class="form-row">
+            <div class="form-group"><label>Stat 1 Value</label><input type="text" id="d_stat1Value"></div>
+            <div class="form-group"><label>Stat 1 Label</label><input type="text" id="d_stat1Label"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Stat 2 Value</label><input type="text" id="d_stat2Value"></div>
+            <div class="form-group"><label>Stat 2 Label</label><input type="text" id="d_stat2Label"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Stat 3 Value</label><input type="text" id="d_stat3Value"></div>
+            <div class="form-group"><label>Stat 3 Label</label><input type="text" id="d_stat3Label"></div>
+          </div>
+          <button type="submit" class="btn btn-dark">Save About Section</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Products &amp; Socials Section Text</h3>
+        <form id="sectionsForm">
+          <div class="form-row">
+            <div class="form-group"><label>Products — Label</label><input type="text" id="d_productsLabel"></div>
+            <div class="form-group"><label>Products — Title</label><input type="text" id="d_productsTitle"></div>
+          </div>
+          <div class="form-group"><label>Products — Subtitle</label><input type="text" id="d_productsSubtitle"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Socials — Label</label><input type="text" id="d_socialsLabel"></div>
+            <div class="form-group"><label>Socials — Title</label><input type="text" id="d_socialsTitle"></div>
+          </div>
+          <div class="form-group"><label>Socials — Subtitle</label><input type="text" id="d_socialsSubtitle"></div>
+          <div class="form-group"><label>Footer Copyright Line</label><input type="text" id="d_footerCopyright"></div>
+          <button type="submit" class="btn btn-dark">Save Section Text</button>
         </form>
       </div>
 
@@ -182,11 +230,25 @@
         <h3>Images</h3>
         <form id="imagesForm">
           <div class="form-row">
+            <div class="form-group"><label>Logo Image URL</label><input type="text" id="d_logoImage" placeholder="https://..."></div>
             <div class="form-group"><label>Hero Background Image URL</label><input type="text" id="d_heroImage" placeholder="https://..."></div>
-            <div class="form-group"><label>About Section Image URL</label><input type="text" id="d_aboutImage" placeholder="https://..."></div>
           </div>
-          <p style="font-size:11px;color:var(--grey);margin-bottom:14px;">Paste a hosted image link (e.g. from Imgur, your own site, or Google Drive's shareable image link). Leave blank to keep the default gold gradient panel. Product photos are set individually in the Products tab.</p>
+          <div class="form-group"><label>About Section Image URL</label><input type="text" id="d_aboutImage" placeholder="https://..."></div>
+          <p style="font-size:11px;color:var(--grey);margin-bottom:14px;">Paste a hosted image link (e.g. from Imgur, your own site, or Google Drive's shareable image link). Leave the logo blank to show the "ZIONOVA" text logo instead. Product photos are set individually in the Products tab.</p>
           <button type="submit" class="btn btn-dark">Save Images</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Receipt Design</h3>
+        <p style="font-size:12px;color:var(--grey);margin-bottom:14px;">This format is used for every receipt — both online orders and in-store POS sales.</p>
+        <form id="receiptForm">
+          <div class="form-group">
+            <label><input type="checkbox" id="d_receiptShowLogo" style="width:auto;margin-right:8px;">Show logo image on receipt (instead of "ZIONOVA" text)</label>
+          </div>
+          <div class="form-group"><label>Thank You Message</label><textarea id="d_receiptThanks" rows="2"></textarea></div>
+          <div class="form-group"><label>Extra Footer Note (optional — e.g. return policy)</label><textarea id="d_receiptFooterNote" rows="2"></textarea></div>
+          <button type="submit" class="btn btn-dark">Save Receipt Design</button>
         </form>
       </div>
 
@@ -249,6 +311,15 @@
       </div>
 
       <div class="card">
+        <h3>Bank Transfer Details</h3>
+        <p style="font-size:12px;color:var(--grey);margin-bottom:12px;">Shown to customers at checkout when they pick Bank Transfer — or when they try Card Payment and are redirected, since card payments aren't available yet.</p>
+        <form id="bankForm">
+          <div class="form-group"><label>Bank Details (shown exactly as typed)</label><textarea id="setBankDetails" rows="5" placeholder="Bank: ...&#10;Account Name: ...&#10;Account Number: ...&#10;Branch: ..."></textarea></div>
+          <button type="submit" class="btn btn-dark">Save Bank Details</button>
+        </form>
+      </div>
+
+      <div class="card">
         <h3>Integrations</h3>
 
         <div class="integration-card">
@@ -304,7 +375,11 @@
       </div>
       <div class="form-group"><label>Stock Quantity *</label><input type="number" id="prodStock" min="0" required></div>
       <div class="form-group"><label>Description</label><textarea id="prodDesc" rows="3"></textarea></div>
-      <div class="form-group"><label>Image URL (optional)</label><input type="text" id="prodImage" placeholder="https://..."></div>
+      <div class="form-group">
+        <label>Image URLs (one per line — first one is the main photo)</label>
+        <textarea id="prodImages" rows="4" placeholder="https://example.com/front.jpg&#10;https://example.com/back.jpg&#10;https://example.com/detail.jpg"></textarea>
+        <p style="font-size:11px;color:var(--grey);margin-top:6px;">Add as many as you like. Customers can swipe through all of them on your storefront.</p>
+      </div>
       <div class="modal-actions">
         <button type="submit" class="btn btn-gold btn-block">Save Product</button>
         <button type="button" class="btn btn-outline btn-block" id="cancelProductBtn">Cancel</button>

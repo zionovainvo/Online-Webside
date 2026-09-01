@@ -5,12 +5,15 @@
 let checkoutProducts = [];
 let shippingFee = 350;
 let selectedPayment = 'Cash on Delivery';
+let siteSettings = {};
 
 async function init(){
   if(!checkFirebaseConfigured()) return;
   const settings = await SettingsStore.get();
+  siteSettings = settings;
   applySiteSettings(settings);
   shippingFee = Number(settings.shippingFee) || 0;
+  document.getElementById('bankDetailsText').textContent = settings.bankDetails || 'Please contact us for our bank transfer details.';
   checkoutProducts = await ProductStore.getAll();
   renderOrderLines();
 }
@@ -60,13 +63,22 @@ function renderSummary(){
   document.getElementById('sumTotal').textContent = formatMoney(total);
 }
 
+function updatePaymentUI(){
+  document.querySelectorAll('.pay-method').forEach(p => p.classList.toggle('active', p.dataset.method === selectedPayment));
+  document.getElementById('cardApologyBox').style.display = selectedPayment === 'Card Payment' ? 'block' : 'none';
+  document.getElementById('bankDetailsBox').style.display = selectedPayment === 'Bank Transfer' ? 'block' : 'none';
+}
+
 document.querySelectorAll('.pay-method').forEach(el => {
   el.addEventListener('click', () => {
-    document.querySelectorAll('.pay-method').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
     selectedPayment = el.dataset.method;
-    document.getElementById('cardFields').style.display = selectedPayment === 'Card Payment' ? 'block' : 'none';
+    updatePaymentUI();
   });
+});
+
+document.getElementById('switchToBankBtn').addEventListener('click', () => {
+  selectedPayment = 'Bank Transfer';
+  updatePaymentUI();
 });
 
 document.getElementById('customerForm').addEventListener('submit', async function(e){
@@ -87,10 +99,8 @@ document.getElementById('customerForm').addEventListener('submit', async functio
     return;
   }
   if(selectedPayment === 'Card Payment'){
-    const num = document.getElementById('cardNumber').value.trim();
-    const exp = document.getElementById('cardExpiry').value.trim();
-    const cvv = document.getElementById('cardCvv').value.trim();
-    if(!num || !exp || !cvv){ errorEl.textContent = 'Please complete your card details.'; return; }
+    errorEl.textContent = 'Card payments aren\'t available yet — please switch to Bank Transfer to continue.';
+    return;
   }
 
   const submitBtn = document.getElementById('placeOrderBtn');
