@@ -81,6 +81,32 @@ document.getElementById('switchToBankBtn').addEventListener('click', () => {
   updatePaymentUI();
 });
 
+const MAX_PROOF_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_PROOF_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
+let paymentProofFile = null;
+
+document.getElementById('paymentProofInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  const nameEl = document.getElementById('proofFileName');
+  paymentProofFile = null;
+  if(!file){ nameEl.textContent = ''; return; }
+  if(!ALLOWED_PROOF_TYPES.includes(file.type)){
+    nameEl.textContent = 'Please upload an image or PDF file.';
+    nameEl.style.color = 'var(--danger)';
+    e.target.value = '';
+    return;
+  }
+  if(file.size > MAX_PROOF_SIZE){
+    nameEl.textContent = 'File is too large — please keep it under 5MB.';
+    nameEl.style.color = 'var(--danger)';
+    e.target.value = '';
+    return;
+  }
+  paymentProofFile = file;
+  nameEl.style.color = 'var(--success)';
+  nameEl.textContent = `Attached: ${file.name}`;
+});
+
 document.getElementById('customerForm').addEventListener('submit', async function(e){
   e.preventDefault();
   const items = CartStore.detailedItems(checkoutProducts);
@@ -99,18 +125,29 @@ document.getElementById('customerForm').addEventListener('submit', async functio
     return;
   }
   if(selectedPayment === 'Card Payment'){
-    errorEl.textContent = 'Card payments aren\'t available yet — please switch to Bank Transfer to continue.';
+    errorEl.textContent = 'Card and online payments aren\'t available yet — please switch to Bank Transfer to continue.';
+    return;
+  }
+  if(selectedPayment === 'Bank Transfer' && !paymentProofFile){
+    errorEl.textContent = 'Please attach a screenshot or PDF of your bank transfer as payment proof.';
     return;
   }
 
   const submitBtn = document.getElementById('placeOrderBtn');
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Placing Order…';
+  submitBtn.textContent = paymentProofFile ? 'Uploading proof…' : 'Placing Order…';
 
   try{
     const subtotal = CartStore.subtotal(checkoutProducts);
     const shipping = shippingFee;
     const total = subtotal + shipping;
+    const tempOrderId = 'ZN' + Date.now().toString().slice(-8);
+
+    let paymentProofUrl = '';
+    if(paymentProofFile){
+      paymentProofUrl = await PaymentProofStore.upload(paymentProofFile, tempOrderId);
+      submitBtn.textContent = 'Placing Order…';
+    }
 
     const order = await OrderStore.create({
       source: 'online',
@@ -118,17 +155,30 @@ document.getElementById('customerForm').addEventListener('submit', async functio
       subtotal, shipping, total,
       customer: { name, phone, email, address },
       paymentMethod: selectedPayment,
+      paymentProofUrl,
       status: 'Paid'
     });
 
     CartStore.clear();
-    window.location.href = `receipt.html?order=${order.id}`;
+    showConfirmModal(order, selectedPayment);
   }catch(err){
     console.error(err);
     errorEl.textContent = 'Something went wrong placing your order. Please try again.';
     submitBtn.disabled = false;
     submitBtn.textContent = 'Place Order & Pay';
   }
+});
+
+function showConfirmModal(order, paymentMethod){
+  document.getElementById('confirmOrderId').textContent = order.id;
+  document.getElementById('confirmReceiptLink').href = `receipt.html?order=${order.id}`;
+  document.getElementById('confirmModalMsg').textContent = paymentMethod === 'Bank Transfer'
+    ? 'We\'ve received your order and your payment proof. Our team will verify it and confirm shortly — you\'ll get a call/email once it\'s verified.'
+    : 'Your order has been placed successfully. We\'ll prepare it for delivery right away.';
+  document.getElementById('confirmModalOverlay').classList.add('active');
+}
+document.getElementById('confirmOkBtn').addEventListener('click', () => {
+  window.location.href = 'index.html';
 });
 
 init();

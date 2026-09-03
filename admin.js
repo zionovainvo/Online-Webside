@@ -383,11 +383,36 @@ function renderOrdersTable(){
       <td>${o.items.reduce((s,i) => s + i.qty, 0)} items</td>
       <td>${formatMoney(o.total)}</td>
       <td>${escapeHTML(o.paymentMethod)}</td>
+      <td>${renderPaymentStatusCell(o)}</td>
       <td>${o.source === 'pos' ? 'In-Store' : 'Online'}</td>
       <td>${new Date(o.date).toLocaleString()}</td>
       <td><a class="btn btn-outline btn-sm" href="receipt.html?order=${o.id}" target="_blank">${icon('print')} Bill</a></td>
     </tr>
-  `).join('') : `<tr><td colspan="8" class="empty-state">No orders match this filter.</td></tr>`;
+  `).join('') : `<tr><td colspan="9" class="empty-state">No orders match this filter.</td></tr>`;
+}
+
+function renderPaymentStatusCell(o){
+  const status = o.paymentStatus || 'N/A';
+  const badgeClass = status === 'Verified' ? 'badge-in' : status === 'Rejected' ? 'badge-out' : 'badge-out';
+  let html = `<span class="badge ${badgeClass}">${escapeHTML(status)}</span>`;
+  if(o.paymentProofUrl){
+    html += `<br><a href="${escapeHTML(o.paymentProofUrl)}" target="_blank" class="gold-text" style="font-size:11px;">View proof</a>`;
+  }
+  if(o.paymentMethod === 'Bank Transfer' && status === 'Pending Verification'){
+    html += `<br><button class="btn btn-outline btn-sm" style="margin-top:4px;padding:4px 8px;font-size:10px;" onclick="setPaymentStatus('${o.id}','Verified')">Verify</button>
+      <button class="btn btn-danger" style="margin-top:4px;padding:4px 8px;font-size:10px;" onclick="setPaymentStatus('${o.id}','Rejected')">Reject</button>`;
+  }
+  return html;
+}
+
+async function setPaymentStatus(orderId, status){
+  try{
+    await OrderStore.update(orderId, { paymentStatus: status });
+    showToast(`Payment marked as ${status}`);
+  }catch(err){
+    console.error(err);
+    showToast('Failed to update payment status');
+  }
 }
 
 document.getElementById('orderSourceFilter').addEventListener('change', renderOrdersTable);
@@ -488,6 +513,8 @@ function loadDesignForm(){
   document.getElementById('d_receiptShowLogo').checked = !!s.receiptShowLogo;
   document.getElementById('d_receiptThanks').value = s.receiptThanksMessage || '';
   document.getElementById('d_receiptFooterNote').value = s.receiptFooterNote || '';
+  document.getElementById('d_returnPolicy').value = s.returnPolicyContent || '';
+  document.getElementById('d_privacyPolicy').value = s.privacyPolicyContent || '';
 
   document.getElementById('d_colorBg').value = s.colorBg || '#ffffff';
   document.getElementById('d_colorBgText').value = s.colorBg || '#ffffff';
@@ -586,6 +613,15 @@ document.getElementById('saveFontBtn').addEventListener('click', async () => {
   const fontPair = active ? active.dataset.font : 'playfair-poppins';
   await SettingsStore.save({ fontPair });
   showToast('Font saved — live on your site now');
+});
+
+document.getElementById('legalForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  await SettingsStore.save({
+    returnPolicyContent: document.getElementById('d_returnPolicy').value.trim(),
+    privacyPolicyContent: document.getElementById('d_privacyPolicy').value.trim()
+  });
+  showToast('Legal pages saved — live on your site now');
 });
 
 /* =====================================================

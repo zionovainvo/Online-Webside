@@ -6,11 +6,13 @@
 let fbReady = false;
 let db = null;
 let auth = null;
+let storage = null;
 
 try{
   firebase.initializeApp(firebaseConfig);
   db = firebase.firestore();
   auth = firebase.auth();
+  storage = firebase.storage();
   fbReady = true;
 }catch(e){
   console.error('Firebase failed to initialize. Did you paste your keys into firebase-config.js?', e);

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Checkout — Zionova</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -61,18 +61,24 @@
         <h2 style="margin-top:30px;">3. Payment Method</h2>
         <div class="pay-methods" id="payMethods">
           <div class="pay-method active" data-method="Cash on Delivery">Cash on Delivery</div>
-          <div class="pay-method" data-method="Card Payment">Card Payment</div>
           <div class="pay-method" data-method="Bank Transfer">Bank Transfer</div>
+          <div class="pay-method" data-method="Card Payment">Card / Online <small style="display:block;font-size:10px;opacity:.7;">(Coming Soon)</small></div>
         </div>
 
         <div id="cardApologyBox" class="apology-box" style="display:none;">
-          <p><strong>We're sorry</strong> — card payments aren't available on our store just yet. Please use Bank Transfer instead, and we'll get your order moving right away.</p>
+          <p><strong>We're sorry</strong> — card and online payments aren't available on our store just yet, but we're working on adding a payment gateway soon. Please use Bank Transfer instead, and we'll get your order moving right away.</p>
           <button type="button" class="btn btn-dark btn-sm" id="switchToBankBtn">Switch to Bank Transfer</button>
         </div>
 
         <div id="bankDetailsBox" class="bank-details-box" style="display:none;">
           <h4>Bank Transfer Details</h4>
           <div id="bankDetailsText"></div>
+          <div class="form-group" style="margin-top:16px;">
+            <label>Upload Payment Proof (screenshot or PDF) *</label>
+            <input type="file" id="paymentProofInput" accept="image/*,application/pdf">
+            <p id="proofFileName" style="font-size:11px;color:var(--grey);margin-top:6px;"></p>
+            <p style="font-size:11px;color:var(--grey);margin-top:6px;">After you transfer the amount above, attach a screenshot or PDF of the confirmation here. We'll verify it and confirm your order shortly.</p>
+          </div>
         </div>
 
         <button type="submit" class="btn btn-gold btn-block" id="placeOrderBtn" style="margin-top:20px;">Place Order &amp; Pay</button>
@@ -89,9 +95,22 @@
   </div>
 </div>
 
+<!-- ---------- ORDER CONFIRMATION MODAL ---------- -->
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal" style="text-align:center;">
+    <div class="confirm-check-icon">✓</div>
+    <h3 id="confirmModalTitle">Order Placed!</h3>
+    <p id="confirmModalMsg" style="font-size:13px;color:var(--grey);margin:14px 0 6px;"></p>
+    <p style="font-size:12px;color:var(--grey);">Order ID: <strong id="confirmOrderId"></strong></p>
+    <button type="button" class="btn btn-gold btn-block" id="confirmOkBtn" style="margin-top:20px;">OK</button>
+    <a href="#" id="confirmReceiptLink" target="_blank" style="display:block;margin-top:12px;font-size:12px;color:var(--grey);text-decoration:underline;">View printable receipt</a>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
 <script src="firebase-config.js"></script>
 <script src="firebase-init.js"></script>
 <script src="icons.js"></script>

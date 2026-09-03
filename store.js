@@ -50,6 +50,9 @@ const DEFAULT_SETTINGS = {
   receiptThanksMessage: 'Thank you for shopping with Zionova — Wear the Statement.',
   receiptFooterNote: '',
   receiptShowLogo: true,
+  // Legal pages (editable, linked from footer)
+  returnPolicyContent: "We accept returns within 7 days of delivery for unworn items in original condition with tags attached.\n\nTo start a return, contact us with your order ID and reason for return. Once approved, ship the item back and we'll process your refund within 5-7 business days.\n\nSale items and custom orders are final sale and not eligible for return.",
+  privacyPolicyContent: "We collect only the information needed to process your order — your name, phone number, email, and delivery address.\n\nYour information is never sold or shared with third parties, except as required to fulfil your order (e.g. courier partners) or process payments.\n\nPayment proof screenshots are stored securely and used only to confirm your order. Contact us any time if you'd like your data removed.",
   // Integrations
   sheetWebhookUrl: '',
   shippingFee: 350
@@ -190,6 +193,8 @@ const OrderStore = {
       total: order.total,
       customer: order.customer || {},
       paymentMethod: order.paymentMethod || 'Cash on Delivery',
+      paymentProofUrl: order.paymentProofUrl || '',
+      paymentStatus: order.paymentStatus || (order.paymentMethod === 'Bank Transfer' ? 'Pending Verification' : 'N/A'),
       status: order.status || 'Paid'
     };
     await db.collection('orders').doc(orderId).set(fullOrder);
@@ -212,7 +217,8 @@ const OrderStore = {
 
     return { id: orderId, ...fullOrder };
   },
-  async remove(id){ await db.collection('orders').doc(id).delete(); }
+  async remove(id){ await db.collection('orders').doc(id).delete(); },
+  async update(id, updates){ await db.collection('orders').doc(id).update(updates); }
 };
 
 /* ---- pure helper functions for reports (operate on an already-fetched array) ---- */
@@ -407,6 +413,20 @@ function shadeColor(hex, percent){
   b = Math.max(0, Math.min(255, b));
   return '#' + (0x1000000 + r*0x10000 + g*0x100 + b).toString(16).slice(1);
 }
+
+/* =====================================================
+   PAYMENT PROOF UPLOAD   (Firebase Storage)
+   Customers attach a screenshot/PDF of their bank transfer as proof.
+   ===================================================== */
+const PaymentProofStore = {
+  async upload(file, orderId){
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const path = `payment-proofs/${orderId}-${Date.now()}-${safeName}`;
+    const ref = storage.ref().child(path);
+    await ref.put(file);
+    return await ref.getDownloadURL();
+  }
+};
 
 /* =====================================================
    ADMIN AUTH   (Firebase Authentication — email + password)

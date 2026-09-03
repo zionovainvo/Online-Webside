@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Zionova — Admin Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <meta name="robots" content="noindex, nofollow">
 </head>
@@ -131,7 +131,7 @@
       </div>
       <div class="card">
         <table class="data-table">
-          <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Source</th><th>Date</th><th></th></tr></thead>
+          <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Payment Status</th><th>Source</th><th>Date</th><th></th></tr></thead>
           <tbody id="ordersTable"></tbody>
         </table>
       </div>
@@ -278,6 +278,16 @@
         <h3>Font Pairing</h3>
         <div class="design-grid" id="fontOptions"></div>
         <button type="button" class="btn btn-dark" id="saveFontBtn" style="margin-top:16px;">Save Font</button>
+      </div>
+
+      <div class="card">
+        <h3>Legal Pages</h3>
+        <p style="font-size:12px;color:var(--grey);margin-bottom:14px;">Shown on their own pages (<code>return-policy.html</code> &amp; <code>privacy-policy.html</code>), linked from your site footer.</p>
+        <form id="legalForm">
+          <div class="form-group"><label>Return Policy</label><textarea id="d_returnPolicy" rows="8"></textarea></div>
+          <div class="form-group"><label>Privacy Policy</label><textarea id="d_privacyPolicy" rows="8"></textarea></div>
+          <button type="submit" class="btn btn-dark">Save Legal Pages</button>
+        </form>
       </div>
 
       <div class="card">

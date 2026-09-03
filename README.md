@@ -1,25 +1,75 @@
 # Zionova Website — Setup Guide
 
-## ⭐ What's new
+## ⭐ What's new (latest update)
 
-1. **Full website editor** — `admin.html` → **Website Editor** now lets you edit
+1. **Bank transfer payment proof + verification queue** — customers who choose
+   Bank Transfer now upload a screenshot or PDF of their payment as proof.
+   It's securely stored in Firebase Storage and attached to the order. In
+   `admin.html` → **Orders**, you'll see a "Pending Verification" badge with
+   **Verify** / **Reject** buttons and a "View proof" link for every bank
+   transfer order — nothing is auto-approved, you confirm it yourself.
+   After placing an order, customers see a confirmation screen with an
+   **OK** button that takes them back to the homepage.
+2. **Card/online payment placeholder** — a "Card / Online (Coming Soon)" tile
+   is shown at checkout with an apology message and a one-click switch to
+   Bank Transfer, so you can wire up a real payment gateway later without
+   restructuring checkout.
+3. **Return Policy & Privacy Policy pages** — two new pages
+   (`return-policy.html`, `privacy-policy.html`), linked from the site
+   footer, fully editable from `admin.html` → **Website Editor → Legal
+   Pages**.
+4. **Premium dark "atelier" redesign** — the whole storefront (and admin
+   panel) now uses a glassy, dark obsidian theme with metallic gold accents,
+   Playfair Display + Plus Jakarta Sans typography, and glowing gold
+   buttons — while keeping every admin editing feature working exactly as
+   before.
+
+### One extra setup step: enable Firebase Storage
+
+Payment proof uploads need Firebase Storage turned on (your project's
+`firebase-config.js` already has a `storageBucket` value, so this is quick):
+
+1. In the Firebase Console, go to **Build → Storage → Get started** and
+   finish the setup wizard (choose the same region as your Firestore DB).
+2. Go to the **Rules** tab and paste this (then **Publish**):
+
+   ```
+   rules_version = '2';
+   service firebase.storage {
+     match /b/{bucket}/o {
+       match /payment-proofs/{fileName} {
+         allow read: if true;
+         allow write: if request.resource.size < 5 * 1024 * 1024
+                       && request.resource.contentType.matches('image/.*|application/pdf');
+       }
+     }
+   }
+   ```
+
+   This lets any customer upload a proof file under 5MB (image or PDF)
+   into the `payment-proofs/` folder, and lets it be viewed (by you, from
+   the Orders tab) — but nothing else in your Storage bucket is exposed.
+
+---
+
+<details>
+<summary><strong>Previous update</strong> — full website editor, receipt design, multi-image gallery</summary>
+
+1. **Full website editor** — `admin.html` → **Website Editor** lets you edit
    every piece of text on the homepage (hero headline, eyebrow text, buttons,
    about section, stats, section labels, footer) plus your logo, hero image,
    about image, colours, and font — all saved to Firebase and live on every
    device within a second or two.
-2. **Receipt design** — a new **Receipt Design** card (same tab) lets you set
+2. **Receipt design** — a **Receipt Design** card (same tab) lets you set
    the thank-you message, an optional footer note, and whether your logo
    appears on receipts. This one format is used for every receipt — online
    orders and in-store POS sales alike.
-3. **Card payment apology + bank transfer** — customers who pick "Card
-   Payment" at checkout now see an apology message and a "Switch to Bank
-   Transfer" button instead of card fields. Set your bank details once in
-   `admin.html` → **Settings → Bank Transfer Details** and they'll show up
-   automatically whenever a customer picks Bank Transfer.
-4. **Multiple product photos** — in **Products → Add/Edit Product**, paste
+3. **Multiple product photos** — in **Products → Add/Edit Product**, paste
    one image URL per line to attach several photos to a product. On the
    storefront, customers can click any product photo to open a full-screen
    gallery and swipe (or use the arrows/keyboard) through all of them.
+
+</details>
 
 ---
 
