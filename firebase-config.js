@@ -33,9 +33,9 @@
 
 const firebaseConfig = {
   apiKey: "AIzaSyAHaRniwVmaqpcrBYczwL_mN0d3Wxp4KQM",
-    authDomain: "zionova-website.firebaseapp.com",
-    projectId: "zionova-website",
-    storageBucket: "zionova-website.firebasestorage.app",
-    messagingSenderId: "446656720368",
-    appId: "1:446656720368:web:f06d219ca91e8bbbdd4135"
+  authDomain: "zionova-website.firebaseapp.com",
+  projectId: "zionova-website",
+  storageBucket: "zionova-website.firebasestorage.app",
+  messagingSenderId: "446656720368",
+  appId: "1:446656720368:web:f06d219ca91e8bbbdd4135"
 };
