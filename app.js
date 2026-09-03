@@ -9,6 +9,7 @@ document.getElementById('closeCart').innerHTML = icon('close');
 let liveProducts = [];
 
 function init(){
+  applySiteSettings(DEFAULT_SETTINGS);
   if(!checkFirebaseConfigured()) return;
 
   // Live site settings (content, colors, fonts, social links) — updates

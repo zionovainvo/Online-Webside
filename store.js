@@ -366,6 +366,8 @@ function applySiteSettings(settings){
     heroVisual.style.backgroundImage = `url('${settings.heroImageUrl}')`;
     heroVisual.style.backgroundSize = 'cover';
     heroVisual.style.backgroundPosition = 'center';
+    const hero = document.querySelector('.hero');
+    if(hero) hero.style.setProperty('--hero-image', `url('${settings.heroImageUrl}')`);
   }
   const aboutVisual = document.getElementById('aboutVisual');
   if(aboutVisual && settings.aboutImageUrl){
