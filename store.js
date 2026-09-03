@@ -141,19 +141,22 @@ function saveCartRaw(list){ localStorage.setItem(CART_KEY, JSON.stringify(list))
 const CartStore = {
   getAll(){ return loadCartRaw(); },
   count(){ return this.getAll().reduce((sum, i) => sum + i.qty, 0); },
-  add(productId, qty = 1){
+  add(productId, qty = 1, size = 'M'){
     const cart = this.getAll();
-    const existing = cart.find(i => i.productId === productId);
+    const existing = cart.find(i => i.productId === productId && (i.size || 'M') === size);
     if(existing) existing.qty += qty; else cart.push({ productId, qty });
+    if(!existing) cart[cart.length - 1].size = size;
     saveCartRaw(cart);
   },
-  updateQty(productId, qty){
+  updateQty(productId, qty, size = 'M'){
     let cart = this.getAll();
-    if(qty <= 0) cart = cart.filter(i => i.productId !== productId);
-    else { const item = cart.find(i => i.productId === productId); if(item) item.qty = qty; }
+    if(qty <= 0) cart = cart.filter(i => !(i.productId === productId && (i.size || 'M') === size));
+    else { const item = cart.find(i => i.productId === productId && (i.size || 'M') === size); if(item) item.qty = qty; }
     saveCartRaw(cart);
   },
-  remove(productId){ saveCartRaw(this.getAll().filter(i => i.productId !== productId)); },
+  remove(productId, size = 'M'){
+    saveCartRaw(this.getAll().filter(i => !(i.productId === productId && (i.size || 'M') === size)));
+  },
   clear(){ saveCartRaw([]); },
   // needs the live product list (already fetched) to compute prices/names
   detailedItems(products){
@@ -161,7 +164,7 @@ const CartStore = {
       const product = products.find(p => p.id === item.productId);
       if(!product) return null;
       const unitPrice = ProductStore.finalPrice(product);
-      return { productId: item.productId, name: product.name, unitPrice, originalPrice: product.price, qty: item.qty, lineTotal: unitPrice * item.qty };
+      return { productId: item.productId, name: product.name, size: item.size || 'M', unitPrice, originalPrice: product.price, qty: item.qty, lineTotal: unitPrice * item.qty };
     }).filter(Boolean);
   },
   subtotal(products){ return this.detailedItems(products).reduce((sum, i) => sum + i.lineTotal, 0); }

@@ -38,6 +38,8 @@ function renderProducts(){
     const finalPrice = ProductStore.finalPrice(p);
     const outOfStock = Number(p.stock) <= 0;
     const images = ProductStore.getImages(p);
+    const sizes = Array.isArray(p.sizes) && p.sizes.length ? p.sizes : ['S','M','L','XL','XXL'];
+    const defaultSize = sizes.includes('M') ? 'M' : sizes[0];
     return `
     <div class="product-card">
       ${p.discount > 0 ? `<div class="badge-discount">-${p.discount}%</div>` : ''}
@@ -54,6 +56,9 @@ function renderProducts(){
           ${p.discount > 0 ? `<span class="price-old">${formatMoney(p.price)}</span>` : ''}
         </div>
         <div class="product-actions">
+          <select class="size-select" id="size-${p.id}" aria-label="Select T-shirt size" ${outOfStock ? 'disabled' : ''}>
+            ${sizes.map(size => `<option value="${escapeHTML(size)}" ${size === defaultSize ? 'selected' : ''}>${escapeHTML(size)}</option>`).join('')}
+          </select>
           <select class="qty-select" id="qty-${p.id}" ${outOfStock ? 'disabled' : ''}>
             ${[1,2,3,4,5].map(n => `<option value="${n}">${n}</option>`).join('')}
           </select>
@@ -69,7 +74,9 @@ function renderProducts(){
 function handleAddToCart(productId){
   const qtySelect = document.getElementById('qty-' + productId);
   const qty = qtySelect ? parseInt(qtySelect.value, 10) : 1;
-  CartStore.add(productId, qty);
+  const sizeSelect = document.getElementById('size-' + productId);
+  const size = sizeSelect ? sizeSelect.value : 'M';
+  CartStore.add(productId, qty, size);
   renderCartCount();
   renderCartDrawer();
   showToast('Added to bag');
@@ -92,13 +99,14 @@ function renderCartDrawer(){
         <div class="cart-item-thumb">${escapeHTML(i.name.split(' ')[0])}</div>
         <div class="cart-item-info">
           <h4>${escapeHTML(i.name)}</h4>
+          <div class="cart-item-size">Size: ${escapeHTML(i.size)}</div>
           <div class="price">${formatMoney(i.unitPrice)}</div>
           <div class="cart-item-qty">
-            <button class="qty-btn" onclick="changeQty('${i.productId}', ${i.qty - 1})">${icon('minus')}</button>
+            <button class="qty-btn" onclick="changeQty('${i.productId}', ${i.qty - 1}, '${i.size}')">${icon('minus')}</button>
             <span>${i.qty}</span>
-            <button class="qty-btn" onclick="changeQty('${i.productId}', ${i.qty + 1})">${icon('plus')}</button>
+            <button class="qty-btn" onclick="changeQty('${i.productId}', ${i.qty + 1}, '${i.size}')">${icon('plus')}</button>
           </div>
-          <a class="remove-link" onclick="removeFromCart('${i.productId}')">Remove</a>
+          <a class="remove-link" onclick="removeFromCart('${i.productId}', '${i.size}')">Remove</a>
         </div>
       </div>
     `).join('');
@@ -106,12 +114,12 @@ function renderCartDrawer(){
   document.getElementById('cartSubtotal').textContent = formatMoney(CartStore.subtotal(liveProducts));
 }
 
-function changeQty(productId, qty){
-  CartStore.updateQty(productId, qty);
+function changeQty(productId, qty, size){
+  CartStore.updateQty(productId, qty, size);
   renderCartCount(); renderCartDrawer(); renderProducts();
 }
-function removeFromCart(productId){
-  CartStore.remove(productId);
+function removeFromCart(productId, size){
+  CartStore.remove(productId, size);
   renderCartCount(); renderCartDrawer(); renderProducts();
 }
 

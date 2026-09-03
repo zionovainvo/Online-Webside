@@ -28,13 +28,13 @@ function renderOrderLines(){
   }else{
     wrap.innerHTML = items.map(i => `
       <div class="order-line">
-        <span class="name">${escapeHTML(i.name)} ×
-          <select onchange="updateLineQty('${i.productId}', this.value)" style="border:1px solid var(--light-grey);padding:4px;">
+        <span class="name">${escapeHTML(i.name)} <small class="order-size">Size: ${escapeHTML(i.size)}</small> ×
+          <select onchange="updateLineQty('${i.productId}', this.value, '${i.size}')" style="border:1px solid var(--light-grey);padding:4px;">
             ${[1,2,3,4,5,6,7,8,9,10].map(n => `<option value="${n}" ${n===i.qty?'selected':''}>${n}</option>`).join('')}
           </select>
         </span>
         <span>${formatMoney(i.lineTotal)}</span>
-        <span class="rm" onclick="removeLine('${i.productId}')">Remove</span>
+        <span class="rm" onclick="removeLine('${i.productId}', '${i.size}')">Remove</span>
       </div>
     `).join('');
     document.getElementById('placeOrderBtn').disabled = false;
@@ -42,12 +42,12 @@ function renderOrderLines(){
   renderSummary();
 }
 
-function updateLineQty(productId, qty){
-  CartStore.updateQty(productId, parseInt(qty, 10));
+function updateLineQty(productId, qty, size){
+  CartStore.updateQty(productId, parseInt(qty, 10), size);
   renderOrderLines();
 }
-function removeLine(productId){
-  CartStore.remove(productId);
+function removeLine(productId, size){
+  CartStore.remove(productId, size);
   renderOrderLines();
 }
 
@@ -152,6 +152,7 @@ document.getElementById('customerForm').addEventListener('submit', async functio
     const order = await OrderStore.create({
       source: 'online',
       items: items.map(i => ({ productId: i.productId, name: i.name, unitPrice: i.unitPrice, qty: i.qty, lineTotal: i.lineTotal })),
+        items: items.map(i => ({ productId: i.productId, name: i.name, size: i.size, unitPrice: i.unitPrice, qty: i.qty, lineTotal: i.lineTotal })),
       subtotal, shipping, total,
       customer: { name, phone, email, address },
       paymentMethod: selectedPayment,

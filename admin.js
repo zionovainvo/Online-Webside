@@ -228,6 +228,7 @@ document.getElementById('cancelProductBtn').addEventListener('click', () => prod
 function openProductModal(id){
   document.getElementById('productForm').reset();
   document.getElementById('prodDiscount').value = 0;
+  document.getElementById('prodSizes').value = 'S, M, L, XL, XXL';
   if(id){
     const p = liveProducts.find(x => x.id === id);
     document.getElementById('productModalTitle').textContent = 'Edit Product';
@@ -236,6 +237,7 @@ function openProductModal(id){
     document.getElementById('prodPrice').value = p.price;
     document.getElementById('prodDiscount').value = p.discount || 0;
     document.getElementById('prodStock').value = p.stock;
+    document.getElementById('prodSizes').value = Array.isArray(p.sizes) && p.sizes.length ? p.sizes.join(', ') : 'S, M, L, XL, XXL';
     document.getElementById('prodDesc').value = p.description || '';
     document.getElementById('prodImages').value = ProductStore.getImages(p).join('\n');
   }else{
@@ -250,12 +252,16 @@ document.getElementById('productForm').addEventListener('submit', async function
   const id = document.getElementById('prodId').value;
   const images = document.getElementById('prodImages').value
     .split('\n').map(s => s.trim()).filter(Boolean);
+  const sizes = document.getElementById('prodSizes').value
+    .split(',').map(s => s.trim().toUpperCase()).filter(Boolean)
+    .filter((size, index, list) => list.indexOf(size) === index);
   const data = {
     name: document.getElementById('prodName').value.trim(),
     price: parseFloat(document.getElementById('prodPrice').value) || 0,
     discount: parseFloat(document.getElementById('prodDiscount').value) || 0,
     stock: parseInt(document.getElementById('prodStock').value, 10) || 0,
     description: document.getElementById('prodDesc').value.trim(),
+    sizes: sizes.length ? sizes : ['S','M','L','XL','XXL'],
     images: images,
     image: images[0] || '' // kept for backward compatibility
   };
@@ -392,9 +398,20 @@ function renderOrdersTable(){
       <td>${renderPaymentStatusCell(o)}</td>
       <td>${o.source === 'pos' ? 'In-Store' : 'Online'}</td>
       <td>${new Date(o.date).toLocaleString()}</td>
-      <td><a class="btn btn-outline btn-sm" href="receipt.html?order=${o.id}" target="_blank">${icon('print')} Bill</a></td>
+      <td><div class="order-actions"><a class="btn btn-outline btn-sm" href="receipt.html?order=${o.id}" target="_blank">${icon('print')} Bill</a><button class="btn btn-danger btn-sm" onclick="deleteOrder('${o.id}')">${icon('trash')} Delete</button></div></td>
     </tr>
   `).join('') : `<tr><td colspan="9" class="empty-state">No orders match this filter.</td></tr>`;
+}
+
+async function deleteOrder(orderId){
+  if(!confirm('Delete this order? This cannot be undone.')) return;
+  try{
+    await OrderStore.remove(orderId);
+    showToast('Order deleted');
+  }catch(err){
+    console.error(err);
+    showToast('Failed to delete order — check your connection');
+  }
 }
 
 function renderPaymentStatusCell(o){

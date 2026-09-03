@@ -90,7 +90,7 @@ async function init(){
       <tbody>
         ${order.items.map(i => `
           <tr>
-            <td>${escapeHTML(i.name)}</td>
+            <td>${escapeHTML(i.name)}${i.size ? ` (Size: ${escapeHTML(i.size)})` : ''}</td>
             <td>${i.qty}</td>
             <td>${formatMoney(i.unitPrice)}</td>
             <td style="text-align:right;">${formatMoney(i.lineTotal)}</td>
