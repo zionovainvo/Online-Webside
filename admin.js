@@ -53,6 +53,12 @@ function showLogin(){
 function initAuth(){
   if(!checkFirebaseConfigured()) return;
 
+  applySiteSettings(DEFAULT_SETTINGS);
+  SettingsStore.get().then(settings => applySiteSettings(settings)).catch(e => {
+    console.error('Could not load site settings:', e);
+    applySiteSettings(DEFAULT_SETTINGS);
+  });
+
   AdminAuth.onChange(async user => {
     if(user){
       try{
