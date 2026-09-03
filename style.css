@@ -181,12 +181,20 @@ input, select, textarea{ font-family:inherit; }
 }
 
 .admin-logo .logo-img{
-  max-height:28px;
+  max-width:180px;
+  max-height:38px;
 }
 
 .login-card .logo-img{
   max-height:44px;
   margin:0 auto;
+}
+.login-logo{
+  display:block;
+  width:min(230px, 100%);
+  height:auto;
+  margin:0 auto 16px;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.18));
 }
 
 .brand-logo span{ color:var(--gold); }
@@ -582,7 +590,7 @@ input, select, textarea{ font-family:inherit; }
 }
 .login-card{
   background:var(--off-white); border:1px solid var(--light-grey); width:380px; max-width:90vw; padding:44px 36px; text-align:center;
-  border-top:3px solid var(--gold);
+   border-radius:22px; border-top:3px solid var(--gold);
   box-shadow:var(--shadow);
 }
 .login-card h1{ font-family:var(--serif); font-size:26px; margin-bottom:6px; color:var(--black); }
@@ -609,6 +617,44 @@ input, select, textarea{ font-family:inherit; }
 .admin-logout:hover{ color:var(--danger); }
 
 .admin-main{ flex:1; padding:34px 40px; overflow-y:auto; }
+.admin-main{
+  background:var(--surface-deep);
+  color:#fff;
+}
+.admin-main .admin-topbar h1,
+.admin-main .admin-topbar .date,
+.admin-main .card h3,
+.admin-main .stat-card .label,
+.admin-main .stat-card .value,
+.admin-main table.data-table th,
+.admin-main table.data-table td,
+.admin-main .pos-card h4,
+.admin-main .report-bar-label,
+.admin-main .report-bar-val,
+.admin-main .filter-row select,
+.admin-main .filter-row input,
+.admin-main .modal h3,
+.admin-main .integration-body h4,
+.admin-main .integration-body p,
+.admin-main .color-field .swatch-label,
+.admin-main .font-option .preview,
+.admin-main .font-option .label{
+  color:#fff;
+}
+.admin-main .stat-card,
+.admin-main .card,
+.admin-main .pos-card,
+.admin-main .pos-cart,
+.admin-main .font-option{
+  background:rgba(255,255,255,.04);
+}
+.admin-main input,
+.admin-main select,
+.admin-main textarea{
+  background:var(--surface-matte);
+  color:#fff;
+}
+.admin-main .btn-outline{ color:#fff; border-color:rgba(255,255,255,.3); }
 .admin-topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:28px; }
 .admin-topbar h1{ font-family:var(--serif); font-size:25px; color:var(--black); font-weight:500; }
 .admin-topbar .date{ font-size:12px; color:var(--grey); }
@@ -690,7 +736,8 @@ table.data-table tr:hover td{ background:rgba(255,255,255,0.02); }
   .admin-sidebar{ width:70px; }
   .admin-nav button span.label{ display:none; }
   .admin-logo{ font-size:0; padding:0 0 26px; text-align:center; }
-  .admin-logo::before{ content:'Z'; font-size:22px; color:var(--gold); }
+  .admin-logo::before{ display:none; }
+  .admin-logo .logo-img{ max-width:38px; object-fit:cover; object-position:left; }
 }
 @media(max-width:640px){
   .nav-links{ display:none; }
